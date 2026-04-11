@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
@@ -12,8 +12,16 @@ export async function GET(req: NextRequest) {
   const today = searchParams.get("today");
 
   const where: Record<string, unknown> = {};
+
+  // USER sadece kendine atanan görevleri görebilir
+  if (session.user.role === "USER") {
+    where.assigneeId = session.user.id;
+  } else {
+    if (assigneeId) where.assigneeId = assigneeId;
+  }
+
   if (projectId) where.projectId = projectId;
-  if (assigneeId) where.assigneeId = assigneeId;
+
   if (today === "true") {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
@@ -37,7 +45,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { title, description, status, deadline, projectId, assigneeId } = await req.json();
   if (!title?.trim()) return NextResponse.json({ error: "Title required" }, { status: 400 });

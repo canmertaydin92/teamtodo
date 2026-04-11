@@ -1,10 +1,20 @@
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { TaskCard } from "@/components/task-card";
 import { TaskForm } from "@/components/task-form";
 
 export default async function TasksPage() {
+  const session = await auth();
+  if (!session?.user) return null;
+
+  const isAdmin = session.user.role === "ADMIN";
+  const userId = session.user.id;
+
+  const taskFilter = isAdmin ? {} : { assigneeId: userId };
+
   const [tasks, projects, users] = await Promise.all([
     prisma.task.findMany({
+      where: taskFilter,
       include: {
         assignee: { select: { id: true, name: true, email: true, image: true } },
         project: { select: { id: true, name: true, color: true } },
@@ -31,10 +41,12 @@ export default async function TasksPage() {
   return (
     <div className="p-6 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Tüm Görevler</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {isAdmin ? "Tüm Görevler" : "Görevlerim"}
+        </h1>
       </div>
 
-      <TaskForm projects={projects} users={users} />
+      {isAdmin && <TaskForm projects={projects} users={users} />}
 
       <div className="mt-8 space-y-8">
         {sections.map(({ key, label, color }) => (

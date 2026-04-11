@@ -5,15 +5,21 @@ import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await auth();
+  if (!session?.user) return null;
+
+  const isAdmin = session.user.role === "ADMIN";
+  const userId = session.user.id;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
+  const userFilter = isAdmin ? {} : { assigneeId: userId };
+
   const [todayTasks, overdueTasks, allStats] = await Promise.all([
     prisma.task.findMany({
-      where: { deadline: { gte: today, lt: tomorrow } },
+      where: { ...userFilter, deadline: { gte: today, lt: tomorrow } },
       include: {
         assignee: { select: { id: true, name: true, email: true, image: true } },
         project: { select: { id: true, name: true, color: true } },
@@ -22,7 +28,7 @@ export default async function DashboardPage() {
       orderBy: { status: "asc" },
     }),
     prisma.task.findMany({
-      where: { deadline: { lt: today }, status: { not: "DONE" } },
+      where: { ...userFilter, deadline: { lt: today }, status: { not: "DONE" } },
       include: {
         assignee: { select: { id: true, name: true, email: true, image: true } },
         project: { select: { id: true, name: true, color: true } },
@@ -31,7 +37,7 @@ export default async function DashboardPage() {
       orderBy: { deadline: "asc" },
       take: 5,
     }),
-    prisma.task.groupBy({ by: ["status"], _count: true }),
+    prisma.task.groupBy({ by: ["status"], where: userFilter, _count: true }),
   ]);
 
   const stats = {
@@ -76,7 +82,9 @@ export default async function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-gray-700">Bugünkü Görevler ({todayTasks.length})</h2>
-          <Link href="/tasks?new=1" className="text-xs text-indigo-600 hover:underline">+ Görev Ekle</Link>
+          {isAdmin && (
+            <Link href="/tasks?new=1" className="text-xs text-indigo-600 hover:underline">+ Görev Ekle</Link>
+          )}
         </div>
         {todayTasks.length === 0 ? (
           <div className="text-center py-12 text-gray-400">

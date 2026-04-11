@@ -16,6 +16,7 @@ interface User {
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  role?: string;
 }
 
 interface SidebarProps {
@@ -25,11 +26,12 @@ interface SidebarProps {
 
 export function Sidebar({ projects, user }: SidebarProps) {
   const pathname = usePathname();
+  const isAdmin = user.role === "ADMIN";
 
   const navLinks = [
     { href: "/dashboard", label: "Bugün", icon: "📋" },
-    { href: "/tasks", label: "Tüm Görevler", icon: "✅" },
-    { href: "/team", label: "Ekip", icon: "👥" },
+    { href: "/tasks", label: isAdmin ? "Tüm Görevler" : "Görevlerim", icon: "✅" },
+    ...(isAdmin ? [{ href: "/team", label: "Ekip", icon: "👥" }] : []),
   ];
 
   return (
@@ -60,27 +62,62 @@ export function Sidebar({ projects, user }: SidebarProps) {
           </Link>
         ))}
 
-        <div className="pt-4">
-          <div className="flex items-center justify-between px-3 py-1 mb-1">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Projeler</span>
-            <Link href="/projects" className="text-xs text-indigo-600 hover:underline">+ Yeni</Link>
+        {/* Projeler — ADMIN hepsini görür, USER sadece kendi atananları */}
+        {projects.length > 0 && (
+          <div className="pt-4">
+            <div className="flex items-center justify-between px-3 py-1 mb-1">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Projeler
+              </span>
+              {isAdmin && (
+                <Link href="/projects" className="text-xs text-indigo-600 hover:underline">
+                  + Yeni
+                </Link>
+              )}
+            </div>
+            {projects.map((project) => (
+              <Link
+                key={project.id}
+                href={`/projects/${project.id}`}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
+                  pathname === `/projects/${project.id}`
+                    ? "bg-indigo-50 text-indigo-700 font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: project.color }}
+                />
+                {project.name}
+              </Link>
+            ))}
           </div>
-          {projects.map((project) => (
+        )}
+
+        {/* Admin paneli — sadece ADMIN görsün */}
+        {isAdmin && (
+          <div className="pt-4">
+            <div className="px-3 py-1 mb-1">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Yönetim
+              </span>
+            </div>
             <Link
-              key={project.id}
-              href={`/projects/${project.id}`}
+              href="/admin/users"
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
-                pathname === `/projects/${project.id}`
+                pathname === "/admin/users"
                   ? "bg-indigo-50 text-indigo-700 font-medium"
                   : "text-gray-600 hover:bg-gray-100"
               )}
             >
-              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />
-              {project.name}
+              <span>⚙️</span>
+              Kullanıcı Yönetimi
             </Link>
-          ))}
-        </div>
+          </div>
+        )}
       </nav>
 
       <div className="p-3 border-t border-gray-100">
@@ -90,7 +127,14 @@ export function Sidebar({ projects, user }: SidebarProps) {
             <AvatarFallback className="text-xs">{user.name?.[0] ?? "?"}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-900 truncate">{user.name}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-medium text-gray-900 truncate">{user.name}</p>
+              {isAdmin && (
+                <span className="text-xs bg-indigo-100 text-indigo-600 px-1 rounded font-medium flex-shrink-0">
+                  Admin
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-400 truncate">{user.email}</p>
           </div>
           <button
