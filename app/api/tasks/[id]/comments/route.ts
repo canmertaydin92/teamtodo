@@ -10,6 +10,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { content } = await req.json();
   if (!content?.trim()) return NextResponse.json({ error: "Content required" }, { status: 400 });
 
+  const task = await prisma.task.findUnique({ where: { id: taskId }, select: { title: true } });
+
   const comment = await prisma.comment.create({
     data: {
       content: content.trim(),
@@ -18,6 +20,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     },
     include: {
       author: { select: { id: true, name: true, image: true } },
+    },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      type: "COMMENT",
+      taskId,
+      userId: session.user.id,
+      meta: { content: content.trim().slice(0, 100), taskTitle: task?.title ?? "" },
     },
   });
 

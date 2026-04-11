@@ -30,6 +30,7 @@ export function Sidebar({ projects, user }: SidebarProps) {
 
   const navLinks = [
     { href: "/dashboard", label: "Bugün", icon: "📋" },
+    { href: "/board", label: isAdmin ? "Ekip Tahtası" : "Görev Tahtam", icon: "🗂️" },
     { href: "/tasks", label: isAdmin ? "Tüm Görevler" : "Görevlerim", icon: "✅" },
     ...(isAdmin ? [{ href: "/team", label: "Ekip", icon: "👥" }] : []),
   ];
@@ -115,6 +116,18 @@ export function Sidebar({ projects, user }: SidebarProps) {
             >
               <span>⚙️</span>
               Kullanıcı Yönetimi
+            </Link>
+            <Link
+              href="/admin/activity"
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
+                pathname === "/admin/activity"
+                  ? "bg-indigo-50 text-indigo-700 font-medium"
+                  : "text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              <span>📊</span>
+              Aktivite Günlüğü
             </Link>
           </div>
         )}

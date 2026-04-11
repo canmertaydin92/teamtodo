@@ -38,25 +38,39 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   // USER sadece kendi görevinin statusunu değiştirebilir
   if (session.user.role === "USER") {
-    const task = await prisma.task.findUnique({ where: { id }, select: { assigneeId: true } });
+    const task = await prisma.task.findUnique({ where: { id }, select: { assigneeId: true, status: true } });
     if (task?.assigneeId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    // USER sadece status değiştirebilir
-    const allowedFields = { status: body.status };
+
+    const oldStatus = task.status;
     const updated = await prisma.task.update({
       where: { id },
-      data: allowedFields,
+      data: { status: body.status },
       include: {
         assignee: { select: { id: true, name: true, email: true, image: true } },
         project: { select: { id: true, name: true, color: true } },
         _count: { select: { comments: true } },
       },
     });
+
+    if (body.status && body.status !== oldStatus) {
+      await prisma.activityLog.create({
+        data: {
+          type: "STATUS_CHANGE",
+          taskId: id,
+          userId: session.user.id,
+          meta: { from: oldStatus, to: body.status, taskTitle: updated.title },
+        },
+      });
+    }
+
     return NextResponse.json(updated);
   }
 
   // ADMIN her şeyi değiştirebilir
+  const existing = await prisma.task.findUnique({ where: { id }, select: { status: true, title: true } });
+
   const task = await prisma.task.update({
     where: { id },
     data: {
@@ -73,6 +87,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       _count: { select: { comments: true } },
     },
   });
+
+  if (body.status && existing && body.status !== existing.status) {
+    await prisma.activityLog.create({
+      data: {
+        type: "STATUS_CHANGE",
+        taskId: id,
+        userId: session.user.id,
+        meta: { from: existing.status, to: body.status, taskTitle: task.title },
+      },
+    });
+  }
 
   return NextResponse.json(task);
 }
