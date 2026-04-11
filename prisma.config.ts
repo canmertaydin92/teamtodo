@@ -1,5 +1,2 @@
-import { defineConfig } from "prisma/config";
-
-export default defineConfig({
-  schema: "prisma/schema.prisma",
-});
+// Prisma v5 does not use this file - configuration is in prisma/schema.prisma
+export {};
