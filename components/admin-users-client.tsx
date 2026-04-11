@@ -38,8 +38,8 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: User[] }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-      <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+    <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+      <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-800/50 border-b border-gray-800 text-xs font-semibold text-gray-500 uppercase tracking-wider">
         <div className="col-span-5">Kullanıcı</div>
         <div className="col-span-2 text-center">Görev</div>
         <div className="col-span-2 text-center">Yorum</div>
@@ -48,7 +48,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: User[] }) {
       </div>
 
       {users.length === 0 && (
-        <div className="text-center py-12 text-gray-400 text-sm">
+        <div className="text-center py-12 text-gray-600 text-sm">
           Henüz kayıtlı kullanıcı yok
         </div>
       )}
@@ -56,33 +56,33 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: User[] }) {
       {users.map((user) => (
         <div
           key={user.id}
-          className="grid grid-cols-12 gap-4 px-4 py-4 border-b border-gray-100 last:border-0 items-center hover:bg-gray-50 transition-colors"
+          className="grid grid-cols-12 gap-4 px-4 py-4 border-b border-gray-800 last:border-0 items-center hover:bg-gray-800/30 transition-colors"
         >
           <div className="col-span-5 flex items-center gap-3">
             <Avatar className="w-9 h-9">
               <AvatarImage src={user.image ?? ""} />
-              <AvatarFallback className="text-sm">{user.name?.[0] ?? "?"}</AvatarFallback>
+              <AvatarFallback className="text-sm bg-gray-700 text-gray-300">{user.name?.[0] ?? "?"}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-sm font-medium text-gray-900">{user.name ?? "—"}</p>
-              <p className="text-xs text-gray-400">{user.email}</p>
+              <p className="text-sm font-medium text-gray-200">{user.name ?? "—"}</p>
+              <p className="text-xs text-gray-600">{user.email}</p>
             </div>
           </div>
 
           <div className="col-span-2 text-center">
-            <span className="text-sm font-medium text-gray-700">{user._count.assignedTasks}</span>
+            <span className="text-sm font-medium text-gray-300">{user._count.assignedTasks}</span>
           </div>
 
           <div className="col-span-2 text-center">
-            <span className="text-sm font-medium text-gray-700">{user._count.comments}</span>
+            <span className="text-sm font-medium text-gray-300">{user._count.comments}</span>
           </div>
 
           <div className="col-span-2 flex justify-center">
             <Badge
               className={`text-xs px-2 py-0.5 border-0 font-medium ${
                 user.role === "ADMIN"
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "bg-gray-100 text-gray-600"
+                  ? "bg-indigo-500/20 text-indigo-400"
+                  : "bg-gray-700 text-gray-400"
               }`}
             >
               {user.role === "ADMIN" ? "Yönetici" : "Kullanıcı"}
@@ -93,10 +93,10 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: User[] }) {
             <button
               onClick={() => toggleRole(user.id, user.role)}
               disabled={loading === user.id}
-              className={`text-xs px-2 py-1 rounded-lg font-medium transition-all ${
+              className={`text-xs px-2 py-1 rounded-lg font-medium transition-all border ${
                 user.role === "ADMIN"
-                  ? "text-red-600 hover:bg-red-50 border border-red-200"
-                  : "text-indigo-600 hover:bg-indigo-50 border border-indigo-200"
+                  ? "text-red-400 hover:bg-red-500/10 border-red-500/30 hover:border-red-500/50"
+                  : "text-indigo-400 hover:bg-indigo-500/10 border-indigo-500/30 hover:border-indigo-500/50"
               } disabled:opacity-40`}
             >
               {loading === user.id

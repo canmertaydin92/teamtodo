@@ -51,26 +51,28 @@ export default async function DashboardPage() {
   return (
     <div className="p-6 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Bugün</h1>
+        <h1 className="text-2xl font-bold text-gray-100">Bugün</h1>
         <p className="text-gray-500 text-sm capitalize">{dateStr}</p>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
-        {[
-          { label: "Yapılacak", value: stats.todo, color: "text-yellow-600 bg-yellow-50" },
-          { label: "Devam Eden", value: stats.inProgress, color: "text-blue-600 bg-blue-50" },
-          { label: "Tamamlanan", value: stats.done, color: "text-green-600 bg-green-50" },
-        ].map((s) => (
-          <div key={s.label} className={`rounded-xl p-4 ${s.color}`}>
-            <p className="text-2xl font-bold">{s.value}</p>
-            <p className="text-sm font-medium">{s.label}</p>
-          </div>
-        ))}
+        <div className="rounded-xl p-4 bg-yellow-500/10 border border-yellow-500/20">
+          <p className="text-2xl font-bold text-yellow-400">{stats.todo}</p>
+          <p className="text-sm font-medium text-yellow-500/70">Yapılacak</p>
+        </div>
+        <div className="rounded-xl p-4 bg-blue-500/10 border border-blue-500/20">
+          <p className="text-2xl font-bold text-blue-400">{stats.inProgress}</p>
+          <p className="text-sm font-medium text-blue-500/70">Devam Eden</p>
+        </div>
+        <div className="rounded-xl p-4 bg-green-500/10 border border-green-500/20">
+          <p className="text-2xl font-bold text-green-400">{stats.done}</p>
+          <p className="text-sm font-medium text-green-500/70">Tamamlanan</p>
+        </div>
       </div>
 
       {overdueTasks.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-red-600 mb-2">⚠ Gecikmiş ({overdueTasks.length})</h2>
+          <h2 className="text-sm font-semibold text-red-400 mb-2">⚠ Gecikmiş ({overdueTasks.length})</h2>
           <div className="space-y-2">
             {overdueTasks.map((task) => (
               <TaskCard key={task.id} task={task} />
@@ -81,13 +83,15 @@ export default async function DashboardPage() {
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-gray-700">Bugünkü Görevler ({todayTasks.length})</h2>
+          <h2 className="text-sm font-semibold text-gray-400">Bugünkü Görevler ({todayTasks.length})</h2>
           {isAdmin && (
-            <Link href="/tasks?new=1" className="text-xs text-indigo-600 hover:underline">+ Görev Ekle</Link>
+            <Link href="/tasks?new=1" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+              + Görev Ekle
+            </Link>
           )}
         </div>
         {todayTasks.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-700">
             <p className="text-4xl mb-2">🎉</p>
             <p className="text-sm">Bugün için görev yok!</p>
           </div>

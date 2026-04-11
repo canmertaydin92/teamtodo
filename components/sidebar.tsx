@@ -36,17 +36,17 @@ export function Sidebar({ projects, user }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-60 min-h-screen bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-4 border-b border-gray-100">
+    <aside className="w-60 min-h-screen bg-gray-900 border-r border-gray-800 flex flex-col">
+      <div className="p-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-500/20">
             <span className="text-white text-sm font-bold">T</span>
           </div>
-          <span className="font-semibold text-gray-900">TeamTodo</span>
+          <span className="font-semibold text-gray-100">TeamTodo</span>
         </div>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-0.5">
         {navLinks.map((link) => (
           <Link
             key={link.href}
@@ -54,8 +54,8 @@ export function Sidebar({ projects, user }: SidebarProps) {
             className={cn(
               "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
               pathname === link.href
-                ? "bg-indigo-50 text-indigo-700 font-medium"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-indigo-500/15 text-indigo-400 font-medium"
+                : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
             )}
           >
             <span>{link.icon}</span>
@@ -63,15 +63,14 @@ export function Sidebar({ projects, user }: SidebarProps) {
           </Link>
         ))}
 
-        {/* Projeler — ADMIN hepsini görür, USER sadece kendi atananları */}
         {projects.length > 0 && (
-          <div className="pt-4">
+          <div className="pt-5">
             <div className="flex items-center justify-between px-3 py-1 mb-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Projeler
               </span>
               {isAdmin && (
-                <Link href="/projects" className="text-xs text-indigo-600 hover:underline">
+                <Link href="/projects" className="text-xs text-indigo-500 hover:text-indigo-400">
                   + Yeni
                 </Link>
               )}
@@ -83,8 +82,8 @@ export function Sidebar({ projects, user }: SidebarProps) {
                 className={cn(
                   "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
                   pathname === `/projects/${project.id}`
-                    ? "bg-indigo-50 text-indigo-700 font-medium"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "bg-indigo-500/15 text-indigo-400 font-medium"
+                    : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
                 )}
               >
                 <span
@@ -97,11 +96,10 @@ export function Sidebar({ projects, user }: SidebarProps) {
           </div>
         )}
 
-        {/* Admin paneli — sadece ADMIN görsün */}
         {isAdmin && (
-          <div className="pt-4">
+          <div className="pt-5">
             <div className="px-3 py-1 mb-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Yönetim
               </span>
             </div>
@@ -110,8 +108,8 @@ export function Sidebar({ projects, user }: SidebarProps) {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
                 pathname === "/admin/users"
-                  ? "bg-indigo-50 text-indigo-700 font-medium"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-indigo-500/15 text-indigo-400 font-medium"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
               )}
             >
               <span>⚙️</span>
@@ -122,8 +120,8 @@ export function Sidebar({ projects, user }: SidebarProps) {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
                 pathname === "/admin/activity"
-                  ? "bg-indigo-50 text-indigo-700 font-medium"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-indigo-500/15 text-indigo-400 font-medium"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
               )}
             >
               <span>📊</span>
@@ -133,26 +131,26 @@ export function Sidebar({ projects, user }: SidebarProps) {
         )}
       </nav>
 
-      <div className="p-3 border-t border-gray-100">
+      <div className="p-3 border-t border-gray-800">
         <div className="flex items-center gap-2 px-2 py-2">
           <Avatar className="w-7 h-7">
             <AvatarImage src={user.image ?? ""} />
-            <AvatarFallback className="text-xs">{user.name?.[0] ?? "?"}</AvatarFallback>
+            <AvatarFallback className="text-xs bg-gray-700 text-gray-300">{user.name?.[0] ?? "?"}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="text-xs font-medium text-gray-900 truncate">{user.name}</p>
+              <p className="text-xs font-medium text-gray-200 truncate">{user.name}</p>
               {isAdmin && (
-                <span className="text-xs bg-indigo-100 text-indigo-600 px-1 rounded font-medium flex-shrink-0">
+                <span className="text-xs bg-indigo-500/20 text-indigo-400 px-1 rounded font-medium flex-shrink-0">
                   Admin
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            <p className="text-xs text-gray-600 truncate">{user.email}</p>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="text-gray-400 hover:text-gray-600 text-xs"
+            className="text-gray-600 hover:text-gray-400 text-xs transition-colors"
             title="Çıkış"
           >
             ↪

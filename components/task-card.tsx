@@ -6,9 +6,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskModal } from "@/components/task-modal";
 
 const STATUS_MAP = {
-  TODO: { label: "Yapılacak", color: "bg-yellow-100 text-yellow-700" },
-  IN_PROGRESS: { label: "Devam Ediyor", color: "bg-blue-100 text-blue-700" },
-  DONE: { label: "Tamamlandı", color: "bg-green-100 text-green-700" },
+  TODO: { label: "Yapılacak", color: "bg-yellow-500/15 text-yellow-400 border-0" },
+  IN_PROGRESS: { label: "Devam Ediyor", color: "bg-blue-500/15 text-blue-400 border-0" },
+  DONE: { label: "Tamamlandı", color: "bg-green-500/15 text-green-400 border-0" },
 };
 
 interface Task {
@@ -34,40 +34,43 @@ export function TaskCard({ task }: { task: Task }) {
     <>
       <div
         onClick={() => setOpen(true)}
-        className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-indigo-300 hover:shadow-sm cursor-pointer transition-all group"
+        className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 hover:border-gray-700 hover:bg-gray-800/50 cursor-pointer transition-all group"
       >
-        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${task.status === "DONE" ? "bg-green-400" : task.status === "IN_PROGRESS" ? "bg-blue-400" : "bg-yellow-400"}`} />
+        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+          task.status === "DONE" ? "bg-green-500" :
+          task.status === "IN_PROGRESS" ? "bg-blue-500" : "bg-yellow-500"
+        }`} />
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium truncate ${task.status === "DONE" ? "line-through text-gray-400" : "text-gray-800"}`}>
+          <p className={`text-sm font-medium truncate ${task.status === "DONE" ? "line-through text-gray-600" : "text-gray-200"}`}>
             {task.title}
           </p>
           <div className="flex items-center gap-2 mt-0.5">
             {task.project && (
-              <span className="text-xs text-gray-400 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: task.project.color }} />
+              <span className="text-xs text-gray-600 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.project.color }} />
                 {task.project.name}
               </span>
             )}
             {deadline && (
-              <span className={`text-xs ${isOverdue ? "text-red-500 font-medium" : "text-gray-400"}`}>
+              <span className={`text-xs ${isOverdue ? "text-red-400 font-medium" : "text-gray-600"}`}>
                 {isOverdue ? "⚠ " : ""}{deadlineStr}
               </span>
             )}
             {(task._count?.comments ?? 0) > 0 && (
-              <span className="text-xs text-gray-400">💬 {task._count!.comments}</span>
+              <span className="text-xs text-gray-600">💬 {task._count!.comments}</span>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge className={`text-xs px-2 py-0.5 font-normal ${status.color} border-0`}>
+          <Badge className={`text-xs px-2 py-0.5 font-normal ${status.color}`}>
             {status.label}
           </Badge>
           {task.assignee && (
             <Avatar className="w-6 h-6">
               <AvatarImage src={task.assignee.image ?? ""} />
-              <AvatarFallback className="text-xs">{task.assignee.name?.[0] ?? "?"}</AvatarFallback>
+              <AvatarFallback className="text-xs bg-gray-700 text-gray-300">{task.assignee.name?.[0] ?? "?"}</AvatarFallback>
             </Avatar>
           )}
         </div>

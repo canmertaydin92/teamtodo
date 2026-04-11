@@ -33,15 +33,15 @@ export default async function TasksPage() {
   };
 
   const sections = [
-    { key: "TODO", label: "Yapılacak", color: "text-yellow-600" },
-    { key: "IN_PROGRESS", label: "Devam Ediyor", color: "text-blue-600" },
-    { key: "DONE", label: "Tamamlandı", color: "text-green-600" },
+    { key: "TODO", label: "Yapılacak", color: "text-yellow-400" },
+    { key: "IN_PROGRESS", label: "Devam Ediyor", color: "text-blue-400" },
+    { key: "DONE", label: "Tamamlandı", color: "text-green-400" },
   ] as const;
 
   return (
     <div className="p-6 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-100">
           {isAdmin ? "Tüm Görevler" : "Görevlerim"}
         </h1>
       </div>
@@ -55,7 +55,7 @@ export default async function TasksPage() {
               {label} ({grouped[key].length})
             </h2>
             {grouped[key].length === 0 ? (
-              <p className="text-sm text-gray-400 italic px-2">Görev yok</p>
+              <p className="text-sm text-gray-700 italic px-2">Görev yok</p>
             ) : (
               <div className="space-y-2">
                 {grouped[key].map((task) => (
