@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { emitUpdate } from "@/lib/sse-emitter";
 
 export async function GET() {
   const session = await auth();
@@ -42,5 +43,6 @@ export async function POST(req: NextRequest) {
   const project = await prisma.project.create({
     data: { name: name.trim(), color: color ?? "#6366f1" },
   });
+  emitUpdate();
   return NextResponse.json(project, { status: 201 });
 }

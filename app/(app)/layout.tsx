@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/sidebar";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -31,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
+      <RealtimeRefresh />
       <Sidebar projects={projects} user={session.user} />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>

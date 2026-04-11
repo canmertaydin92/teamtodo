@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { emitUpdate } from "@/lib/sse-emitter";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -65,6 +66,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       });
     }
 
+    emitUpdate();
     return NextResponse.json(updated);
   }
 
@@ -99,6 +101,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
   }
 
+  emitUpdate();
   return NextResponse.json(task);
 }
 
@@ -109,5 +112,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { id } = await params;
   await prisma.task.delete({ where: { id } });
+  emitUpdate();
   return NextResponse.json({ ok: true });
 }

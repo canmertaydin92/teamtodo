@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { emitUpdate } from "@/lib/sse-emitter";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -32,5 +33,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     },
   });
 
+  emitUpdate();
   return NextResponse.json(comment, { status: 201 });
 }
