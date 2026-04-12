@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { NotificationButton } from "@/components/notification-button";
 
 interface Project {
   id: string;
@@ -133,7 +132,6 @@ export function Sidebar({ projects, user }: SidebarProps) {
       </nav>
 
       <div className="p-3 border-t border-gray-800">
-        <NotificationButton />
         <div className="flex items-center gap-2 px-2 py-2">
           <Avatar className="w-7 h-7">
             <AvatarImage src={user.image ?? ""} />
