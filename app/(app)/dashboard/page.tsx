@@ -49,7 +49,7 @@ export default async function DashboardPage() {
   const dateStr = today.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-4 md:p-6 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-100">Bugün</h1>
         <p className="text-gray-500 text-sm capitalize">{dateStr}</p>

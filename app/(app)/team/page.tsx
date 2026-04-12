@@ -23,7 +23,7 @@ export default async function TeamPage() {
   });
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-4 md:p-6 max-w-4xl">
       <h1 className="text-2xl font-bold text-gray-100 mb-6">Ekip</h1>
 
       <div className="space-y-8">

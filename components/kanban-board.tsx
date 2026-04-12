@@ -94,7 +94,7 @@ export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: Kanba
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-4 h-full">
+      <div className="flex md:grid md:grid-cols-3 gap-4 h-full overflow-x-auto pb-2 snap-x snap-mandatory">
         {(Object.keys(STATUS_CONFIG) as Status[]).map((status) => {
           const cfg = STATUS_CONFIG[status];
           const columnTasks = grouped[status];
@@ -103,7 +103,7 @@ export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: Kanba
           return (
             <div
               key={status}
-              className={`rounded-2xl border-2 transition-all ${cfg.bg} ${
+              className={`rounded-2xl border-2 transition-all flex-shrink-0 w-[80vw] md:w-auto snap-center ${cfg.bg} ${
                 isOver ? `ring-2 ${cfg.dropHover}` : ""
               }`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(status); }}

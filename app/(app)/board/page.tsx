@@ -27,22 +27,20 @@ export default async function BoardPage() {
   ]);
 
   return (
-    <div className="p-6 flex flex-col h-screen overflow-hidden">
-      <div className="flex items-center justify-between mb-5 flex-shrink-0">
+    <div className="p-4 md:p-6 flex flex-col" style={{ height: "calc(100dvh - 57px)" }}>
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-100">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-100">
             {isAdmin ? "Ekip Tahtası" : "Görev Tahtam"}
           </h1>
-          <p className="text-sm text-gray-600 mt-0.5">
-            {isAdmin
-              ? `${tasks.length} görev — sürükleyerek durumu değiştir`
-              : `${tasks.length} görev atandı — sürükleyerek durumu değiştir`}
+          <p className="text-xs text-gray-600 mt-0.5 hidden md:block">
+            {tasks.length} görev — sürükleyerek durumu değiştir
           </p>
         </div>
         {isAdmin && <TaskForm projects={projects} users={users} />}
       </div>
 
-      <div className="flex-1 overflow-auto pb-6">
+      <div className="flex-1 overflow-hidden">
         <KanbanBoard tasks={tasks} showAssignee={isAdmin} />
       </div>
     </div>
