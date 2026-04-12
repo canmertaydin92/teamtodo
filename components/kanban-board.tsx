@@ -53,7 +53,7 @@ interface Task {
   _count?: { comments: number };
 }
 
-export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: { tasks: Task[]; showAssignee?: boolean }) {
+export function KanbanBoard({ tasks: initialTasks, showAssignee = false, isAdmin = false }: { tasks: Task[]; showAssignee?: boolean; isAdmin?: boolean }) {
   const [tasks, setTasks] = useState(initialTasks);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -111,6 +111,7 @@ export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: { tas
               tasks={grouped[status]}
               showAssignee={showAssignee}
               activeId={activeId}
+              isAdmin={isAdmin}
               onCardClick={(id) => setSelectedTaskId(id)}
             />
           ))}
@@ -141,12 +142,14 @@ function KanbanColumn({
   tasks,
   showAssignee,
   activeId,
+  isAdmin,
   onCardClick,
 }: {
   status: Status;
   tasks: Task[];
   showAssignee: boolean;
   activeId: string | null;
+  isAdmin: boolean;
   onCardClick: (id: string) => void;
 }) {
   const cfg = STATUS_CONFIG[status];
@@ -174,6 +177,7 @@ function KanbanColumn({
             task={task}
             showAssignee={showAssignee}
             isBeingDragged={activeId === task.id}
+            disabled={task.status === "DONE" && !isAdmin}
             onClick={() => onCardClick(task.id)}
           />
         ))}
@@ -196,14 +200,16 @@ function DraggableCard({
   task,
   showAssignee,
   isBeingDragged,
+  disabled,
   onClick,
 }: {
   task: Task;
   showAssignee: boolean;
   isBeingDragged: boolean;
+  disabled: boolean;
   onClick: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: task.id });
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: task.id, disabled });
 
   const style = transform
     ? { transform: CSS.Translate.toString(transform) }
@@ -217,10 +223,10 @@ function DraggableCard({
     >
       {/* Sürükleme tutacağı — sadece bu alan drag'i tetikler */}
       <div
-        {...listeners}
-        {...attributes}
-        className="absolute top-2.5 right-2.5 p-1 touch-none cursor-grab active:cursor-grabbing text-gray-700 hover:text-gray-500 z-10"
-        title="Sürükle"
+        {...(!disabled ? listeners : {})}
+        {...(!disabled ? attributes : {})}
+        className={`absolute top-2.5 right-2.5 p-1 touch-none z-10 ${disabled ? "opacity-20 cursor-not-allowed" : "cursor-grab active:cursor-grabbing text-gray-700 hover:text-gray-500"}`}
+        title={disabled ? "Tamamlanan görev taşınamaz" : "Sürükle"}
       >
         <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
           <circle cx="3" cy="3" r="1.5" />

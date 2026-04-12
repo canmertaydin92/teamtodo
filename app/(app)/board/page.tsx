@@ -40,7 +40,7 @@ export default async function BoardPage() {
         {isAdmin && <TaskForm projects={projects} users={users} />}
       </div>
 
-      <KanbanBoard tasks={tasks} showAssignee={isAdmin} />
+      <KanbanBoard tasks={tasks} showAssignee={isAdmin} isAdmin={isAdmin} />
     </div>
   );
 }
