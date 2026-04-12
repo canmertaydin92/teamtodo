@@ -48,7 +48,7 @@ export function AppShell({
       {/* Sağ içerik */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobil üst bar */}
-        <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
+        <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-gray-900 border-b border-gray-800 sticky top-0 z-10 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <button
             onClick={() => setOpen(true)}
             className="text-gray-400 hover:text-gray-200 p-1 -ml-1"
