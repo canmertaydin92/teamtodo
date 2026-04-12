@@ -10,7 +10,7 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function PushSubscribe() {
-  const [status, setStatus] = useState<"idle" | "subscribed" | "denied" | "unsupported">("idle");
+  const [status, setStatus] = useState<"checking" | "idle" | "subscribed" | "denied" | "unsupported">("checking");
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
@@ -23,7 +23,7 @@ export function PushSubscribe() {
       return;
     }
 
-    // Service worker'ı kaydet
+    // Kontrol tamamlanmadan banner gösterme
     navigator.serviceWorker.register("/sw.js").then(async (reg) => {
       const existing = await reg.pushManager.getSubscription();
       if (existing) {
@@ -31,11 +31,15 @@ export function PushSubscribe() {
         return;
       }
 
-      // Daha önce izin verilmişse otomatik abone ol
+      // Daha önce izin verilmişse otomatik abone ol, banner gösterme
       if (Notification.permission === "granted") {
         await subscribe(reg);
+        return;
       }
-    });
+
+      // Henüz izin verilmemiş → banner göster
+      setStatus("idle");
+    }).catch(() => setStatus("unsupported"));
   }, []);
 
   async function subscribe(reg?: ServiceWorkerRegistration) {
