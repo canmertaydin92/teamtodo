@@ -213,12 +213,29 @@ function DraggableCard({
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
-      onClick={onClick}
-      className={`touch-none select-none ${isBeingDragged ? "opacity-30" : ""}`}
+      className={`relative ${isBeingDragged ? "opacity-30" : ""}`}
     >
-      <CardContent task={task} showAssignee={showAssignee} />
+      {/* Sürükleme tutacağı — sadece bu alan drag'i tetikler */}
+      <div
+        {...listeners}
+        {...attributes}
+        className="absolute top-2.5 right-2.5 p-1 touch-none cursor-grab active:cursor-grabbing text-gray-700 hover:text-gray-500 z-10"
+        title="Sürükle"
+      >
+        <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+          <circle cx="3" cy="3" r="1.5" />
+          <circle cx="9" cy="3" r="1.5" />
+          <circle cx="3" cy="8" r="1.5" />
+          <circle cx="9" cy="8" r="1.5" />
+          <circle cx="3" cy="13" r="1.5" />
+          <circle cx="9" cy="13" r="1.5" />
+        </svg>
+      </div>
+
+      {/* Kartın geri kalanına dokunmak modal açar, scroll'u bozmaz */}
+      <div onClick={onClick}>
+        <CardContent task={task} showAssignee={showAssignee} />
+      </div>
     </div>
   );
 }
