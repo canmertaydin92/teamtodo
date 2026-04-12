@@ -102,8 +102,8 @@ export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: { tas
 
   return (
     <>
-      <DndContext sensors={sensors} autoScroll={false} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className={`flex md:grid md:grid-cols-3 gap-4 h-full pb-2 snap-x snap-mandatory ${activeId ? "overflow-hidden" : "overflow-x-auto"}`}>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex flex-col md:grid md:grid-cols-3 gap-4">
           {(Object.keys(STATUS_CONFIG) as Status[]).map((status) => (
             <KanbanColumn
               key={status}
@@ -155,7 +155,7 @@ function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-2xl border-2 transition-all flex-shrink-0 w-[82vw] md:w-auto snap-center ${cfg.bg} ${
+      className={`rounded-2xl border-2 transition-all ${cfg.bg} ${
         isOver ? cfg.dropActive : ""
       }`}
     >
