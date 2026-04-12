@@ -46,7 +46,8 @@ model User {
   sessions      Session[]
   assignedTasks Task[]        @relation("AssignedTasks")
   comments      Comment[]
-  activityLogs  ActivityLog[]
+  activityLogs      ActivityLog[]
+  pushSubscriptions PushSubscription[]
 }
 
 enum Role {
@@ -100,6 +101,16 @@ enum Status {
   TODO
   IN_PROGRESS
   DONE
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
 }
 
 model ActivityLog {

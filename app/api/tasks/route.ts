@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { emitUpdate } from "@/lib/sse-emitter";
+import { sendPushToAll, sendPushToUser } from "@/lib/web-push";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -69,5 +70,15 @@ export async function POST(req: NextRequest) {
   });
 
   emitUpdate();
+
+  // Atanan kişiye bildirim gönder (oluşturan kişi hariç)
+  const creator = session.user;
+  const notifyBody = `${creator.name ?? "Biri"} sana yeni bir görev atadı`;
+  if (task.assigneeId && task.assigneeId !== creator.id) {
+    sendPushToUser(task.assigneeId, { title: task.title, body: notifyBody }).catch(() => {});
+  } else {
+    sendPushToAll({ title: "Yeni görev eklendi", body: `${task.title}` }, creator.id).catch(() => {});
+  }
+
   return NextResponse.json(task, { status: 201 });
 }

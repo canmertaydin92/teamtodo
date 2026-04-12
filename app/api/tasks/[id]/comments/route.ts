@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { emitUpdate } from "@/lib/sse-emitter";
+import { sendPushToAll } from "@/lib/web-push";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -34,5 +35,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   });
 
   emitUpdate();
+
+  sendPushToAll(
+    { title: task?.title ?? "Görev", body: `${session.user.name ?? "Biri"}: ${content.trim().slice(0, 80)}` },
+    session.user.id
+  ).catch(() => {});
+
   return NextResponse.json(comment, { status: 201 });
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { emitUpdate } from "@/lib/sse-emitter";
+import { sendPushToAll } from "@/lib/web-push";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -67,6 +68,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     emitUpdate();
+
+    if (body.status && body.status !== oldStatus) {
+      const STATUS_TR: Record<string, string> = { TODO: "Yapılacak", IN_PROGRESS: "Devam Ediyor", DONE: "Tamamlandı" };
+      sendPushToAll(
+        { title: updated.title, body: `${session.user.name ?? "Biri"}: ${STATUS_TR[oldStatus]} → ${STATUS_TR[body.status]}` },
+        session.user.id
+      ).catch(() => {});
+    }
+
     return NextResponse.json(updated);
   }
 
@@ -102,6 +112,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   emitUpdate();
+
+  if (body.status && existing && body.status !== existing.status) {
+    const STATUS_TR: Record<string, string> = { TODO: "Yapılacak", IN_PROGRESS: "Devam Ediyor", DONE: "Tamamlandı" };
+    sendPushToAll(
+      { title: task.title, body: `${session.user.name ?? "Admin"}: ${STATUS_TR[existing.status]} → ${STATUS_TR[body.status]}` },
+      session.user.id
+    ).catch(() => {});
+  }
+
   return NextResponse.json(task);
 }
 

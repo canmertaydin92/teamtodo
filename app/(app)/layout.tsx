@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AppShell } from "@/components/app-shell";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { PushSubscribe } from "@/components/push-subscribe";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -33,6 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <RealtimeRefresh />
+      <PushSubscribe />
       <AppShell projects={projects} user={session.user}>
         {children}
       </AppShell>
