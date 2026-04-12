@@ -1,6 +1,19 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskModal } from "@/components/task-modal";
 
@@ -10,21 +23,21 @@ const STATUS_CONFIG = {
     bg: "bg-gray-900 border-gray-800",
     headerText: "text-yellow-400",
     dot: "bg-yellow-500",
-    dropHover: "ring-yellow-500/40 bg-yellow-500/5",
+    dropActive: "ring-2 ring-yellow-500/40 bg-yellow-500/5",
   },
   IN_PROGRESS: {
     label: "Devam Ediyor",
     bg: "bg-gray-900 border-gray-800",
     headerText: "text-blue-400",
     dot: "bg-blue-500",
-    dropHover: "ring-blue-500/40 bg-blue-500/5",
+    dropActive: "ring-2 ring-blue-500/40 bg-blue-500/5",
   },
   DONE: {
     label: "Tamamlandı",
     bg: "bg-gray-900 border-gray-800",
     headerText: "text-green-400",
     dot: "bg-green-500",
-    dropHover: "ring-green-500/40 bg-green-500/5",
+    dropActive: "ring-2 ring-green-500/40 bg-green-500/5",
   },
 } as const;
 
@@ -33,7 +46,6 @@ type Status = keyof typeof STATUS_CONFIG;
 interface Task {
   id: string;
   title: string;
-  description?: string | null;
   status: Status;
   deadline?: Date | string | null;
   assignee?: { id: string; name?: string | null; email?: string | null; image?: string | null } | null;
@@ -41,17 +53,19 @@ interface Task {
   _count?: { comments: number };
 }
 
-interface KanbanBoardProps {
-  tasks: Task[];
-  showAssignee?: boolean;
-}
-
-export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: KanbanBoardProps) {
+export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: { tasks: Task[]; showAssignee?: boolean }) {
   const [tasks, setTasks] = useState(initialTasks);
-  const [dragging, setDragging] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState<Status | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const dragId = useRef<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 8 },
+    })
+  );
 
   const grouped = {
     TODO: tasks.filter((t) => t.status === "TODO"),
@@ -59,93 +73,57 @@ export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: Kanba
     DONE: tasks.filter((t) => t.status === "DONE"),
   };
 
-  function onDragStart(taskId: string) {
-    dragId.current = taskId;
-    setDragging(taskId);
+  const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null;
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string);
   }
 
-  function onDragEnd() {
-    setDragging(null);
-    setDragOver(null);
-    dragId.current = null;
-  }
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setActiveId(null);
 
-  async function onDrop(status: Status) {
-    const taskId = dragId.current;
-    if (!taskId) return;
+    if (!over) return;
 
+    const taskId = active.id as string;
+    const newStatus = over.id as Status;
     const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.status === status) {
-      setDragging(null);
-      setDragOver(null);
-      return;
-    }
 
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status } : t)));
-    setDragging(null);
-    setDragOver(null);
+    if (!task || task.status === newStatus) return;
+
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
 
     await fetch(`/api/tasks/${taskId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status: newStatus }),
     });
   }
 
   return (
     <>
-      <div className="flex md:grid md:grid-cols-3 gap-4 h-full overflow-x-auto pb-2 snap-x snap-mandatory">
-        {(Object.keys(STATUS_CONFIG) as Status[]).map((status) => {
-          const cfg = STATUS_CONFIG[status];
-          const columnTasks = grouped[status];
-          const isOver = dragOver === status;
-
-          return (
-            <div
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex md:grid md:grid-cols-3 gap-4 h-full overflow-x-auto pb-2 snap-x snap-mandatory">
+          {(Object.keys(STATUS_CONFIG) as Status[]).map((status) => (
+            <KanbanColumn
               key={status}
-              className={`rounded-2xl border-2 transition-all flex-shrink-0 w-[80vw] md:w-auto snap-center ${cfg.bg} ${
-                isOver ? `ring-2 ${cfg.dropHover}` : ""
-              }`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(status); }}
-              onDragLeave={() => setDragOver(null)}
-              onDrop={() => onDrop(status)}
-            >
-              <div className="px-4 py-3 flex items-center gap-2 border-b border-gray-800">
-                <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
-                <span className={`text-sm font-semibold ${cfg.headerText}`}>{cfg.label}</span>
-                <span className={`ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 ${cfg.headerText}`}>
-                  {columnTasks.length}
-                </span>
-              </div>
+              status={status}
+              tasks={grouped[status]}
+              showAssignee={showAssignee}
+              activeId={activeId}
+              onCardClick={(id) => setSelectedTaskId(id)}
+            />
+          ))}
+        </div>
 
-              <div className="p-3 space-y-2 min-h-[200px]">
-                {columnTasks.map((task) => (
-                  <KanbanCard
-                    key={task.id}
-                    task={task}
-                    isDragging={dragging === task.id}
-                    showAssignee={showAssignee}
-                    onDragStart={() => onDragStart(task.id)}
-                    onDragEnd={onDragEnd}
-                    onClick={() => setSelectedTaskId(task.id)}
-                  />
-                ))}
-
-                {columnTasks.length === 0 && !isOver && (
-                  <div className="flex items-center justify-center h-20 text-xs text-gray-700 italic">
-                    Görev yok
-                  </div>
-                )}
-                {isOver && dragging && (
-                  <div className="h-16 rounded-xl border-2 border-dashed border-indigo-700 bg-indigo-500/5 flex items-center justify-center text-xs text-indigo-500">
-                    Buraya bırak
-                  </div>
-                )}
-              </div>
+        <DragOverlay dropAnimation={null}>
+          {activeTask && (
+            <div className="rotate-2 opacity-95 shadow-2xl shadow-black/40">
+              <CardContent task={activeTask} showAssignee={showAssignee} isDragging />
             </div>
-          );
-        })}
-      </div>
+          )}
+        </DragOverlay>
+      </DndContext>
 
       {selectedTaskId && (
         <TaskModal
@@ -158,20 +136,101 @@ export function KanbanBoard({ tasks: initialTasks, showAssignee = false }: Kanba
   );
 }
 
-function KanbanCard({
-  task,
-  isDragging,
+function KanbanColumn({
+  status,
+  tasks,
   showAssignee,
-  onDragStart,
-  onDragEnd,
+  activeId,
+  onCardClick,
+}: {
+  status: Status;
+  tasks: Task[];
+  showAssignee: boolean;
+  activeId: string | null;
+  onCardClick: (id: string) => void;
+}) {
+  const cfg = STATUS_CONFIG[status];
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-2xl border-2 transition-all flex-shrink-0 w-[82vw] md:w-auto snap-center ${cfg.bg} ${
+        isOver ? cfg.dropActive : ""
+      }`}
+    >
+      <div className="px-4 py-3 flex items-center gap-2 border-b border-gray-800">
+        <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
+        <span className={`text-sm font-semibold ${cfg.headerText}`}>{cfg.label}</span>
+        <span className={`ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 ${cfg.headerText}`}>
+          {tasks.length}
+        </span>
+      </div>
+
+      <div className="p-3 space-y-2 min-h-[200px]">
+        {tasks.map((task) => (
+          <DraggableCard
+            key={task.id}
+            task={task}
+            showAssignee={showAssignee}
+            isBeingDragged={activeId === task.id}
+            onClick={() => onCardClick(task.id)}
+          />
+        ))}
+        {tasks.length === 0 && !isOver && (
+          <div className="flex items-center justify-center h-20 text-xs text-gray-700 italic select-none">
+            Görev yok
+          </div>
+        )}
+        {isOver && (
+          <div className="h-16 rounded-xl border-2 border-dashed border-indigo-700 bg-indigo-500/5 flex items-center justify-center text-xs text-indigo-500">
+            Buraya bırak
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DraggableCard({
+  task,
+  showAssignee,
+  isBeingDragged,
   onClick,
 }: {
   task: Task;
-  isDragging: boolean;
   showAssignee: boolean;
-  onDragStart: () => void;
-  onDragEnd: () => void;
+  isBeingDragged: boolean;
   onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: task.id });
+
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform) }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      className={`touch-none select-none ${isBeingDragged ? "opacity-30" : ""}`}
+    >
+      <CardContent task={task} showAssignee={showAssignee} />
+    </div>
+  );
+}
+
+function CardContent({
+  task,
+  showAssignee,
+  isDragging = false,
+}: {
+  task: Task;
+  showAssignee: boolean;
+  isDragging?: boolean;
 }) {
   const deadline = task.deadline ? new Date(task.deadline) : null;
   const isOverdue = deadline && deadline < new Date() && task.status !== "DONE";
@@ -179,12 +238,8 @@ function KanbanCard({
 
   return (
     <div
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
-      className={`bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 cursor-grab active:cursor-grabbing hover:border-gray-600 hover:bg-gray-750 transition-all select-none ${
-        isDragging ? "opacity-40 rotate-1 shadow-2xl" : "shadow-sm"
+      className={`bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 cursor-grab active:cursor-grabbing transition-colors ${
+        isDragging ? "" : "hover:border-gray-600"
       }`}
     >
       <p className={`text-sm font-medium leading-snug mb-2 ${
