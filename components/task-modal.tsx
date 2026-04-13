@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { PRIORITY_CONFIG, type Priority } from "@/lib/priority";
 
 const STATUS_OPTIONS = [
   { value: "TODO", label: "Yapılacak" },
@@ -17,6 +16,7 @@ const STATUS_OPTIONS = [
 interface Comment {
   id: string;
   content: string;
+  imageUrl?: string | null;
   createdAt: string;
   author: { id: string; name?: string | null; image?: string | null };
 }
@@ -26,7 +26,6 @@ interface TaskDetail {
   title: string;
   description?: string | null;
   status: string;
-  priority?: Priority;
   deadline?: string | null;
   assignees?: { user: { id: string; name?: string | null; email?: string | null; image?: string | null } }[];
   project?: { id: string; name: string; color: string } | null;
@@ -37,6 +36,9 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open && taskId) {
@@ -55,26 +57,43 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
     setTask((t) => (t ? { ...t, status } : t));
   }
 
-  async function updatePriority(priority: Priority) {
-    await fetch(`/api/tasks/${taskId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ priority }),
-    });
-    setTask((t) => (t ? { ...t, priority } : t));
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  function removeImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function submitComment() {
-    if (!comment.trim()) return;
+    if (!comment.trim() && !imageFile) return;
     setSubmitting(true);
+
+    let imageUrl: string | null = null;
+    if (imageFile) {
+      const fd = new FormData();
+      fd.append("file", imageFile);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      imageUrl = data.url ?? null;
+    }
+
     const res = await fetch(`/api/tasks/${taskId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: comment }),
+      body: JSON.stringify({ content: comment, imageUrl }),
     });
     const newComment = await res.json();
     setTask((t) => (t ? { ...t, comments: [...t.comments, newComment] } : t));
     setComment("");
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setSubmitting(false);
   }
 
@@ -102,22 +121,6 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
             {deadline && (
               <span className="px-2 py-1 rounded-md bg-gray-800 text-gray-400 text-xs">📅 {deadline}</span>
             )}
-          </div>
-
-          <div className="flex gap-1.5 flex-wrap">
-            {(Object.keys(PRIORITY_CONFIG) as Priority[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => updatePriority(p)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all border ${
-                  task.priority === p
-                    ? `${PRIORITY_CONFIG[p].bg} ${PRIORITY_CONFIG[p].color} ${PRIORITY_CONFIG[p].border}`
-                    : "bg-gray-800 text-gray-500 border-transparent hover:bg-gray-700"
-                }`}
-              >
-                {PRIORITY_CONFIG[p].label}
-              </button>
-            ))}
           </div>
 
           <div className="flex gap-1.5 flex-wrap">
@@ -172,28 +175,71 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
                         {new Date(c.createdAt).toLocaleDateString("tr-TR")}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-400 mt-0.5">{c.content}</p>
+                    {c.content && <p className="text-sm text-gray-400 mt-0.5">{c.content}</p>}
+                    {c.imageUrl && (
+                      <img
+                        src={c.imageUrl}
+                        alt="yorum görseli"
+                        className="mt-2 rounded-lg max-w-full max-h-64 object-cover cursor-pointer"
+                        onClick={() => window.open(c.imageUrl!, "_blank")}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="flex gap-2">
-              <Textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Yorum yaz..."
-                className="text-sm min-h-[60px] resize-none bg-gray-800 border-gray-700 text-gray-200 placeholder:text-gray-600 focus:border-indigo-500"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && e.ctrlKey) submitComment();
-                }}
+
+            {/* Yorum yazma alanı */}
+            <div className="space-y-2">
+              {imagePreview && (
+                <div className="relative inline-block">
+                  <img src={imagePreview} alt="önizleme" className="rounded-lg max-h-32 object-cover" />
+                  <button
+                    onClick={removeImage}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-2 items-end">
+                <Textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Yorum yaz..."
+                  className="text-sm min-h-[60px] resize-none bg-gray-800 border-gray-700 text-gray-200 placeholder:text-gray-600 focus:border-indigo-500"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.ctrlKey) submitComment();
+                  }}
+                />
+                <div className="flex flex-col gap-1.5 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-9 h-9 rounded-lg bg-gray-800 border border-gray-700 hover:border-indigo-500 flex items-center justify-center text-gray-400 hover:text-indigo-400 transition-colors"
+                    title="Fotoğraf ekle"
+                  >
+                    📷
+                  </button>
+                  <Button
+                    onClick={submitComment}
+                    disabled={submitting || (!comment.trim() && !imageFile)}
+                    className="w-9 h-9 p-0 bg-indigo-600 hover:bg-indigo-500 text-xs"
+                  >
+                    {submitting ? "..." : "↑"}
+                  </Button>
+                </div>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleImageChange}
               />
-              <Button
-                onClick={submitComment}
-                disabled={submitting || !comment.trim()}
-                className="self-end text-xs px-3 bg-indigo-600 hover:bg-indigo-500"
-              >
-                Gönder
-              </Button>
             </div>
           </div>
         </div>
