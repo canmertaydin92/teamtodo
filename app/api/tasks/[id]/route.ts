@@ -94,6 +94,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(body.title !== undefined && { title: body.title }),
       ...(body.description !== undefined && { description: body.description }),
       ...(body.status !== undefined && { status: body.status }),
+      ...(body.priority !== undefined && { priority: body.priority }),
       ...(body.deadline !== undefined && { deadline: body.deadline ? new Date(body.deadline) : null }),
       ...(body.projectId !== undefined && { projectId: body.projectId }),
       ...(assigneeIds !== undefined && {

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { title, description, status, deadline, projectId, assigneeIds } = await req.json();
+  const { title, description, status, priority, deadline, projectId, assigneeIds } = await req.json();
   if (!title?.trim()) return NextResponse.json({ error: "Title required" }, { status: 400 });
 
   const ids: string[] = Array.isArray(assigneeIds) ? assigneeIds : [];
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
       title: title.trim(),
       description: description ?? null,
       status: status ?? "TODO",
+      priority: priority ?? "NORMAL",
       deadline: deadline ? new Date(deadline) : null,
       projectId: projectId ?? null,
       assignees: ids.length > 0 ? { create: ids.map((userId) => ({ userId })) } : undefined,

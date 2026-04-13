@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { PRIORITY_CONFIG, type Priority } from "@/lib/priority";
 
 const STATUS_OPTIONS = [
   { value: "TODO", label: "Yapılacak" },
@@ -25,6 +26,7 @@ interface TaskDetail {
   title: string;
   description?: string | null;
   status: string;
+  priority?: Priority;
   deadline?: string | null;
   assignees?: { user: { id: string; name?: string | null; email?: string | null; image?: string | null } }[];
   project?: { id: string; name: string; color: string } | null;
@@ -51,6 +53,15 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
       body: JSON.stringify({ status }),
     });
     setTask((t) => (t ? { ...t, status } : t));
+  }
+
+  async function updatePriority(priority: Priority) {
+    await fetch(`/api/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priority }),
+    });
+    setTask((t) => (t ? { ...t, priority } : t));
   }
 
   async function submitComment() {
@@ -91,6 +102,22 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
             {deadline && (
               <span className="px-2 py-1 rounded-md bg-gray-800 text-gray-400 text-xs">📅 {deadline}</span>
             )}
+          </div>
+
+          <div className="flex gap-1.5 flex-wrap">
+            {(Object.keys(PRIORITY_CONFIG) as Priority[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => updatePriority(p)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all border ${
+                  task.priority === p
+                    ? `${PRIORITY_CONFIG[p].bg} ${PRIORITY_CONFIG[p].color} ${PRIORITY_CONFIG[p].border}`
+                    : "bg-gray-800 text-gray-500 border-transparent hover:bg-gray-700"
+                }`}
+              >
+                {PRIORITY_CONFIG[p].label}
+              </button>
+            ))}
           </div>
 
           <div className="flex gap-1.5 flex-wrap">

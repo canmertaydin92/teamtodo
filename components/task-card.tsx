@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskModal } from "@/components/task-modal";
+import { PRIORITY_CONFIG, type Priority } from "@/lib/priority";
 
 const STATUS_MAP = {
   TODO: { label: "Yapılacak", color: "bg-yellow-500/15 text-yellow-400 border-0" },
@@ -16,6 +17,7 @@ interface Task {
   title: string;
   description?: string | null;
   status: "TODO" | "IN_PROGRESS" | "DONE";
+  priority?: Priority;
   deadline?: Date | string | null;
   assignees?: { user: { id: string; name?: string | null; email?: string | null; image?: string | null } }[];
   project?: { id: string; name: string; color: string } | null;
@@ -64,6 +66,11 @@ export function TaskCard({ task }: { task: Task }) {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          {task.priority && task.priority !== "NORMAL" && (
+            <Badge className={`text-xs px-2 py-0.5 font-normal border ${PRIORITY_CONFIG[task.priority].bg} ${PRIORITY_CONFIG[task.priority].color} ${PRIORITY_CONFIG[task.priority].border}`}>
+              {PRIORITY_CONFIG[task.priority].label}
+            </Badge>
+          )}
           <Badge className={`text-xs px-2 py-0.5 font-normal ${status.color}`}>
             {status.label}
           </Badge>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PRIORITY_CONFIG, type Priority } from "@/lib/priority";
 
 interface Project { id: string; name: string; color: string }
 interface User { id: string; name?: string | null; email?: string | null; image?: string | null }
@@ -18,6 +19,7 @@ export function TaskForm({ projects, users }: { projects: Project[]; users: User
     description: "",
     deadline: "",
     projectId: "",
+    priority: "NORMAL" as Priority,
     assigneeIds: [] as string[],
   });
 
@@ -44,10 +46,11 @@ export function TaskForm({ projects, users }: { projects: Project[]; users: User
         deadline: form.deadline || null,
         projectId: form.projectId || null,
         assigneeIds: form.assigneeIds,
+        priority: form.priority,
       }),
     });
 
-    setForm({ title: "", description: "", deadline: "", projectId: "", assigneeIds: [] });
+    setForm({ title: "", description: "", deadline: "", projectId: "", priority: "NORMAL", assigneeIds: [] });
     setOpen(false);
     setLoading(false);
     router.refresh();
@@ -100,6 +103,15 @@ export function TaskForm({ projects, users }: { projects: Project[]; users: User
           <option value="">Proje seç</option>
           {projects.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+        <select
+          value={form.priority}
+          onChange={(e) => setForm({ ...form, priority: e.target.value as Priority })}
+          className={`${inputClass} ${PRIORITY_CONFIG[form.priority].color}`}
+        >
+          {(Object.keys(PRIORITY_CONFIG) as Priority[]).map((p) => (
+            <option key={p} value={p}>{PRIORITY_CONFIG[p].label}</option>
           ))}
         </select>
 

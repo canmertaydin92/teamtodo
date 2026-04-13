@@ -16,6 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskModal } from "@/components/task-modal";
+import { PRIORITY_CONFIG, type Priority } from "@/lib/priority";
 
 const STATUS_CONFIG = {
   TODO: {
@@ -47,6 +48,7 @@ interface Task {
   id: string;
   title: string;
   status: Status;
+  priority?: Priority;
   deadline?: Date | string | null;
   assignees?: { user: { id: string; name?: string | null; email?: string | null; image?: string | null } }[];
   project?: { id: string; name: string; color: string } | null;
@@ -261,10 +263,13 @@ function CardContent({
 
   return (
     <div
-      className={`bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 cursor-grab active:cursor-grabbing transition-colors ${
+      className={`bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 cursor-grab active:cursor-grabbing transition-colors overflow-hidden relative ${
         isDragging ? "" : "hover:border-gray-600"
       }`}
     >
+      {task.priority && task.priority !== "NORMAL" && (
+        <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${PRIORITY_CONFIG[task.priority].dot}`} />
+      )}
       <p className={`text-sm font-medium leading-snug mb-2 ${
         task.status === "DONE" ? "line-through text-gray-600" : "text-gray-200"
       }`}>
