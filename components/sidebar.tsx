@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { OWNER_EMAIL } from "@/lib/owner";
 
 interface Project {
   id: string;
@@ -27,6 +28,7 @@ interface SidebarProps {
 export function Sidebar({ projects, user }: SidebarProps) {
   const pathname = usePathname();
   const isAdmin = user.role === "ADMIN";
+  const isOwner = user.email === OWNER_EMAIL;
 
   const navLinks = [
     { href: "/dashboard", label: "Bugün", icon: "📋" },
@@ -103,7 +105,7 @@ export function Sidebar({ projects, user }: SidebarProps) {
                 Yönetim
               </span>
             </div>
-            <Link
+            {isOwner && <Link
               href="/admin/users"
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
@@ -114,7 +116,7 @@ export function Sidebar({ projects, user }: SidebarProps) {
             >
               <span>⚙️</span>
               Kullanıcı Yönetimi
-            </Link>
+            </Link>}
             <Link
               href="/admin/activity"
               className={cn(

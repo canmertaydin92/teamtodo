@@ -1,9 +1,14 @@
 import { requireAdmin } from "@/lib/auth-helpers";
 import { AdminUsersClient } from "@/components/admin-users-client";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { isOwner } from "@/lib/owner";
+import { redirect } from "next/navigation";
 
 export default async function AdminUsersPage() {
   await requireAdmin();
+  const session = await auth();
+  if (!isOwner(session?.user?.email)) redirect("/dashboard");
 
   const users = await prisma.user.findMany({
     select: {
