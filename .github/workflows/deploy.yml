@@ -17,5 +17,6 @@ jobs:
           script: |
             cd teamtodo
             git pull
+            npx prisma db push --accept-data-loss
             npm run build
             pm2 restart teamtodo
