@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { emitUpdate } from "@/lib/sse-emitter";
 import { sendPushToAll } from "@/lib/web-push";
 
+const assigneeInclude = {
+  assignees: { include: { user: { select: { id: true, name: true, email: true, image: true } } } },
+};
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -12,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const task = await prisma.task.findUnique({
     where: { id },
     include: {
-      assignee: { select: { id: true, name: true, email: true, image: true } },
+      ...assigneeInclude,
       project: { select: { id: true, name: true, color: true } },
       comments: {
         include: { author: { select: { id: true, name: true, image: true } } },
@@ -23,9 +27,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // USER sadece kendi görevine erişebilir
-  if (session.user.role === "USER" && task.assigneeId !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (session.user.role === "USER") {
+    const isAssigned = task.assignees.some((a) => a.userId === session.user.id);
+    if (!isAssigned) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   return NextResponse.json(task);
@@ -38,19 +42,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await req.json();
 
-  // USER sadece kendi görevinin statusunu değiştirebilir
   if (session.user.role === "USER") {
-    const task = await prisma.task.findUnique({ where: { id }, select: { assigneeId: true, status: true } });
-    if (task?.assigneeId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const task = await prisma.task.findUnique({
+      where: { id },
+      select: { status: true, assignees: { select: { userId: true } } },
+    });
+    const isAssigned = task?.assignees.some((a) => a.userId === session.user.id);
+    if (!isAssigned) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const oldStatus = task.status;
+    const oldStatus = task!.status;
     const updated = await prisma.task.update({
       where: { id },
       data: { status: body.status },
       include: {
-        assignee: { select: { id: true, name: true, email: true, image: true } },
+        ...assigneeInclude,
         project: { select: { id: true, name: true, color: true } },
         _count: { select: { comments: true } },
       },
@@ -65,23 +70,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           meta: { from: oldStatus, to: body.status, taskTitle: updated.title },
         },
       });
-    }
-
-    emitUpdate();
-
-    if (body.status && body.status !== oldStatus) {
+      emitUpdate();
       const STATUS_TR: Record<string, string> = { TODO: "Yapılacak", IN_PROGRESS: "Devam Ediyor", DONE: "Tamamlandı" };
       sendPushToAll(
         { title: updated.title, body: `${session.user.name ?? "Biri"}: ${STATUS_TR[oldStatus]} → ${STATUS_TR[body.status]}` },
         session.user.id
       ).catch(() => {});
+    } else {
+      emitUpdate();
     }
 
     return NextResponse.json(updated);
   }
 
-  // ADMIN her şeyi değiştirebilir
+  // ADMIN
   const existing = await prisma.task.findUnique({ where: { id }, select: { status: true, title: true } });
+
+  const assigneeIds: string[] | undefined = body.assigneeIds;
 
   const task = await prisma.task.update({
     where: { id },
@@ -91,10 +96,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(body.status !== undefined && { status: body.status }),
       ...(body.deadline !== undefined && { deadline: body.deadline ? new Date(body.deadline) : null }),
       ...(body.projectId !== undefined && { projectId: body.projectId }),
-      ...(body.assigneeId !== undefined && { assigneeId: body.assigneeId }),
+      ...(assigneeIds !== undefined && {
+        assignees: {
+          deleteMany: {},
+          create: assigneeIds.map((userId) => ({ userId })),
+        },
+      }),
     },
     include: {
-      assignee: { select: { id: true, name: true, email: true, image: true } },
+      ...assigneeInclude,
       project: { select: { id: true, name: true, color: true } },
       _count: { select: { comments: true } },
     },
@@ -109,11 +119,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         meta: { from: existing.status, to: body.status, taskTitle: task.title },
       },
     });
-  }
-
-  emitUpdate();
-
-  if (body.status && existing && body.status !== existing.status) {
     const STATUS_TR: Record<string, string> = { TODO: "Yapılacak", IN_PROGRESS: "Devam Ediyor", DONE: "Tamamlandı" };
     sendPushToAll(
       { title: task.title, body: `${session.user.name ?? "Admin"}: ${STATUS_TR[existing.status]} → ${STATUS_TR[body.status]}` },
@@ -121,6 +126,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     ).catch(() => {});
   }
 
+  emitUpdate();
   return NextResponse.json(task);
 }
 

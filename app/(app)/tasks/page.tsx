@@ -10,13 +10,13 @@ export default async function TasksPage() {
   const isAdmin = session.user.role === "ADMIN";
   const userId = session.user.id;
 
-  const taskFilter = isAdmin ? {} : { assigneeId: userId };
+  const taskFilter = isAdmin ? {} : { assignees: { some: { userId } } };
 
   const [tasks, projects, users] = await Promise.all([
     prisma.task.findMany({
       where: taskFilter,
       include: {
-        assignee: { select: { id: true, name: true, email: true, image: true } },
+        assignees: { include: { user: { select: { id: true, name: true, email: true, image: true } } } },
         project: { select: { id: true, name: true, color: true } },
         _count: { select: { comments: true } },
       },

@@ -15,25 +15,21 @@ export default async function DashboardPage() {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const userFilter = isAdmin ? {} : { assigneeId: userId };
+  const userFilter = isAdmin ? {} : { assignees: { some: { userId } } };
+
+  const assigneeInclude = {
+    assignees: { include: { user: { select: { id: true, name: true, email: true, image: true } } } },
+  };
 
   const [todayTasks, overdueTasks, allStats] = await Promise.all([
     prisma.task.findMany({
       where: { ...userFilter, deadline: { gte: today, lt: tomorrow } },
-      include: {
-        assignee: { select: { id: true, name: true, email: true, image: true } },
-        project: { select: { id: true, name: true, color: true } },
-        _count: { select: { comments: true } },
-      },
+      include: { ...assigneeInclude, project: { select: { id: true, name: true, color: true } }, _count: { select: { comments: true } } },
       orderBy: { status: "asc" },
     }),
     prisma.task.findMany({
       where: { ...userFilter, deadline: { lt: today }, status: { not: "DONE" } },
-      include: {
-        assignee: { select: { id: true, name: true, email: true, image: true } },
-        project: { select: { id: true, name: true, color: true } },
-        _count: { select: { comments: true } },
-      },
+      include: { ...assigneeInclude, project: { select: { id: true, name: true, color: true } }, _count: { select: { comments: true } } },
       orderBy: { deadline: "asc" },
       take: 5,
     }),

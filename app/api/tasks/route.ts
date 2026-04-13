@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { emitUpdate } from "@/lib/sse-emitter";
 import { sendPushToAll, sendPushToUser } from "@/lib/web-push";
 
+const assigneeInclude = {
+  assignees: { include: { user: { select: { id: true, name: true, email: true, image: true } } } },
+};
+
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,11 +19,10 @@ export async function GET(req: NextRequest) {
 
   const where: Record<string, unknown> = {};
 
-  // USER sadece kendine atanan görevleri görebilir
   if (session.user.role === "USER") {
-    where.assigneeId = session.user.id;
+    where.assignees = { some: { userId: session.user.id } };
   } else {
-    if (assigneeId) where.assigneeId = assigneeId;
+    if (assigneeId) where.assignees = { some: { userId: assigneeId } };
   }
 
   if (projectId) where.projectId = projectId;
@@ -35,7 +38,7 @@ export async function GET(req: NextRequest) {
   const tasks = await prisma.task.findMany({
     where,
     include: {
-      assignee: { select: { id: true, name: true, email: true, image: true } },
+      ...assigneeInclude,
       project: { select: { id: true, name: true, color: true } },
       _count: { select: { comments: true } },
     },
@@ -50,8 +53,10 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { title, description, status, deadline, projectId, assigneeId } = await req.json();
+  const { title, description, status, deadline, projectId, assigneeIds } = await req.json();
   if (!title?.trim()) return NextResponse.json({ error: "Title required" }, { status: 400 });
+
+  const ids: string[] = Array.isArray(assigneeIds) ? assigneeIds : [];
 
   const task = await prisma.task.create({
     data: {
@@ -60,10 +65,10 @@ export async function POST(req: NextRequest) {
       status: status ?? "TODO",
       deadline: deadline ? new Date(deadline) : null,
       projectId: projectId ?? null,
-      assigneeId: assigneeId ?? null,
+      assignees: ids.length > 0 ? { create: ids.map((userId) => ({ userId })) } : undefined,
     },
     include: {
-      assignee: { select: { id: true, name: true, email: true, image: true } },
+      ...assigneeInclude,
       project: { select: { id: true, name: true, color: true } },
       _count: { select: { comments: true } },
     },
@@ -71,13 +76,15 @@ export async function POST(req: NextRequest) {
 
   emitUpdate();
 
-  // Atanan kişiye bildirim gönder (oluşturan kişi hariç)
   const creator = session.user;
-  const notifyBody = `${creator.name ?? "Biri"} sana yeni bir görev atadı`;
-  if (task.assigneeId && task.assigneeId !== creator.id) {
-    sendPushToUser(task.assigneeId, { title: task.title, body: notifyBody }).catch(() => {});
+  if (ids.length === 1 && ids[0] !== creator.id) {
+    sendPushToUser(ids[0], { title: task.title, body: `${creator.name ?? "Biri"} sana yeni bir görev atadı` }).catch(() => {});
+  } else if (ids.length > 1) {
+    ids.filter((id) => id !== creator.id).forEach((uid) => {
+      sendPushToUser(uid, { title: task.title, body: `${creator.name ?? "Biri"} sana yeni bir görev atadı` }).catch(() => {});
+    });
   } else {
-    sendPushToAll({ title: "Yeni görev eklendi", body: `${task.title}` }, creator.id).catch(() => {});
+    sendPushToAll({ title: "Yeni görev eklendi", body: task.title }, creator.id).catch(() => {});
   }
 
   return NextResponse.json(task, { status: 201 });

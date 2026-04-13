@@ -48,7 +48,7 @@ interface Task {
   title: string;
   status: Status;
   deadline?: Date | string | null;
-  assignee?: { id: string; name?: string | null; email?: string | null; image?: string | null } | null;
+  assignees?: { user: { id: string; name?: string | null; email?: string | null; image?: string | null } }[];
   project?: { id: string; name: string; color: string } | null;
   _count?: { comments: number };
 }
@@ -289,16 +289,27 @@ function CardContent({
           )}
         </div>
 
-        {showAssignee && task.assignee && (
-          <Avatar className="w-6 h-6 flex-shrink-0">
-            <AvatarImage src={task.assignee.image ?? ""} />
-            <AvatarFallback className="text-xs bg-gray-700 text-gray-300">{task.assignee.name?.[0] ?? "?"}</AvatarFallback>
-          </Avatar>
+        {showAssignee && (task.assignees?.length ?? 0) > 0 && (
+          <div className="flex -space-x-1.5 flex-shrink-0">
+            {task.assignees!.slice(0, 3).map(({ user }) => (
+              <Avatar key={user.id} className="w-6 h-6 border-2 border-gray-800">
+                <AvatarImage src={user.image ?? ""} />
+                <AvatarFallback className="text-xs bg-gray-700 text-gray-300">{user.name?.[0] ?? "?"}</AvatarFallback>
+              </Avatar>
+            ))}
+            {(task.assignees!.length > 3) && (
+              <div className="w-6 h-6 rounded-full bg-gray-700 border-2 border-gray-800 flex items-center justify-center text-[10px] text-gray-400">
+                +{task.assignees!.length - 3}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
-      {showAssignee && task.assignee && (
-        <p className="text-xs text-gray-600 mt-1.5 truncate">{task.assignee.name}</p>
+      {showAssignee && (task.assignees?.length ?? 0) > 0 && (
+        <p className="text-xs text-gray-600 mt-1.5 truncate">
+          {task.assignees!.map((a) => a.user.name).join(", ")}
+        </p>
       )}
     </div>
   );
