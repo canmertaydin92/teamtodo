@@ -15,7 +15,7 @@ export async function GET() {
       image: true,
       role: true,
       createdAt: true,
-      _count: { select: { assignedTasks: true, comments: true } },
+      _count: { select: { taskAssignments: true, comments: true } },
     },
     orderBy: { createdAt: "asc" },
   });

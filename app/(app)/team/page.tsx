@@ -9,14 +9,17 @@ export default async function TeamPage() {
       name: true,
       email: true,
       image: true,
-      assignedTasks: {
+      taskAssignments: {
         include: {
-          assignee: { select: { id: true, name: true, email: true, image: true } },
-          project: { select: { id: true, name: true, color: true } },
-          _count: { select: { comments: true } },
+          task: {
+            include: {
+              assignees: { include: { user: { select: { id: true, name: true, email: true, image: true } } } },
+              project: { select: { id: true, name: true, color: true } },
+              _count: { select: { comments: true } },
+            },
+          },
         },
-        where: { status: { not: "DONE" } },
-        orderBy: [{ status: "asc" }, { deadline: "asc" }],
+        where: { task: { status: { not: "DONE" } } },
       },
     },
     orderBy: { name: "asc" },
@@ -39,15 +42,15 @@ export default async function TeamPage() {
                 <p className="text-xs text-gray-600">{user.email}</p>
               </div>
               <span className="ml-auto text-xs text-gray-600 bg-gray-800 px-2 py-1 rounded-lg">
-                {user.assignedTasks.length} aktif görev
+                {user.taskAssignments.length} aktif görev
               </span>
             </div>
 
-            {user.assignedTasks.length === 0 ? (
+            {user.taskAssignments.length === 0 ? (
               <p className="text-sm text-gray-700 italic px-2 pb-2">Aktif görev yok</p>
             ) : (
               <div className="space-y-2">
-                {user.assignedTasks.map((task) => (
+                {user.taskAssignments.map(({ task }) => (
                   <TaskCard key={task.id} task={task} />
                 ))}
               </div>

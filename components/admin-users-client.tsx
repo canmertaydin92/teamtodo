@@ -11,7 +11,7 @@ interface User {
   image?: string | null;
   role: "ADMIN" | "USER";
   createdAt: string;
-  _count: { assignedTasks: number; comments: number };
+  _count: { taskAssignments: number; comments: number };
 }
 
 export function AdminUsersClient({ initialUsers }: { initialUsers: User[] }) {
@@ -72,7 +72,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: User[] }) {
             </div>
             <p className="text-xs text-gray-600 truncate mt-0.5">{user.email}</p>
             <p className="text-xs text-gray-700 mt-1">
-              {user._count.assignedTasks} görev · {user._count.comments} yorum
+              {user._count.taskAssignments} görev · {user._count.comments} yorum
             </p>
           </div>
 
