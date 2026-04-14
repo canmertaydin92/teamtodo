@@ -37,27 +37,41 @@ export function NotesClient({ initialNotes, isAdmin }: { initialNotes: Note[]; i
     if (!content.trim() && !imageFile) return;
     setSubmitting(true);
 
-    let imageUrl: string | null = null;
-    if (imageFile) {
-      const fd = new FormData();
-      fd.append("file", imageFile);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      imageUrl = data.url ?? null;
-    }
+    try {
+      let imageUrl: string | null = null;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+        if (upRes.ok) {
+          const data = await upRes.json();
+          imageUrl = data.url ?? null;
+        }
+      }
 
-    const res = await fetch("/api/notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content, imageUrl }),
-    });
-    const note = await res.json();
-    setNotes((prev) => [note, ...prev]);
-    setContent("");
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    setSubmitting(false);
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, imageUrl }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error ?? "Bir hata oluştu");
+        return;
+      }
+
+      const note = await res.json();
+      setNotes((prev) => [note, ...prev]);
+      setContent("");
+      setImageFile(null);
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (err) {
+      alert("Bağlantı hatası, tekrar dene.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleDelete(id: string) {

@@ -74,27 +74,34 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
     if (!comment.trim() && !imageFile) return;
     setSubmitting(true);
 
-    let imageUrl: string | null = null;
-    if (imageFile) {
-      const fd = new FormData();
-      fd.append("file", imageFile);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      imageUrl = data.url ?? null;
-    }
+    try {
+      let imageUrl: string | null = null;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+        if (upRes.ok) {
+          const data = await upRes.json();
+          imageUrl = data.url ?? null;
+        }
+      }
 
-    const res = await fetch(`/api/tasks/${taskId}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: comment, imageUrl }),
-    });
-    const newComment = await res.json();
-    setTask((t) => (t ? { ...t, comments: [...t.comments, newComment] } : t));
-    setComment("");
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    setSubmitting(false);
+      const res = await fetch(`/api/tasks/${taskId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: comment, imageUrl }),
+      });
+      const newComment = await res.json();
+      setTask((t) => (t ? { ...t, comments: [...t.comments, newComment] } : t));
+      setComment("");
+      setImageFile(null);
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch {
+      alert("Bağlantı hatası, tekrar dene.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!task) return null;
