@@ -31,5 +31,5 @@ export async function POST(req: NextRequest) {
   const filename = `${randomUUID()}.${ext}`;
   await writeFile(join(uploadDir, filename), buffer);
 
-  return NextResponse.json({ url: `/uploads/${filename}` });
+  return NextResponse.json({ url: `/api/uploads/${filename}` });
 }
