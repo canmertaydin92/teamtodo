@@ -15,7 +15,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       include: {
         tasks: {
           include: {
-            assignee: { select: { id: true, name: true, email: true, image: true } },
+            assignees: { include: { user: { select: { id: true, name: true, email: true, image: true } } } },
             project: { select: { id: true, name: true, color: true } },
             _count: { select: { comments: true } },
           },
