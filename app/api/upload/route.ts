@@ -5,29 +5,45 @@ import { join } from "path";
 import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
-  if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
+    const formData = await req.formData();
+    const file = formData.get("file") as File | null;
+    if (!file) {
+      console.error("[upload] No file in request");
+      return NextResponse.json({ error: "No file" }, { status: 400 });
+    }
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+    console.log(`[upload] file: ${file.name}, size: ${file.size}, type: ${file.type}`);
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const allowed = ["jpg", "jpeg", "png", "gif", "webp", "heic"];
-  if (!allowed.includes(ext)) return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-  if (buffer.length > 10 * 1024 * 1024) return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
+    const ext = (file.name.split(".").pop()?.toLowerCase() ?? "jpg").replace("heif", "heic");
+    const allowed = ["jpg", "jpeg", "png", "gif", "webp", "heic", "heif"];
+    if (!allowed.includes(ext)) {
+      console.error(`[upload] Invalid type: ${ext}`);
+      return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
+    }
 
-  const uploadDir = process.env.UPLOAD_DIR ?? join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
+    if (buffer.length > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
+    }
 
-  const filename = `${randomUUID()}.${ext}`;
-  const filepath = join(uploadDir, filename);
-  await writeFile(filepath, buffer);
+    const uploadDir = process.env.UPLOAD_DIR ?? join(process.cwd(), "public", "uploads");
+    console.log(`[upload] uploadDir: ${uploadDir}`);
+    await mkdir(uploadDir, { recursive: true });
 
-  console.log(`[upload] saved to: ${filepath}`);
-  return NextResponse.json({ url: `/api/uploads/${filename}` });
+    const filename = `${randomUUID()}.${ext}`;
+    const filepath = join(uploadDir, filename);
+    await writeFile(filepath, buffer);
+
+    console.log(`[upload] saved: ${filepath}`);
+    return NextResponse.json({ url: `/api/uploads/${filename}` });
+  } catch (err) {
+    console.error("[upload] ERROR:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }
