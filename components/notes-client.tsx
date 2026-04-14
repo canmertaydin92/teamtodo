@@ -3,6 +3,29 @@
 import { useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 1200;
+      let { width, height } = img;
+      if (width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
+      if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        resolve(new File([blob!], "image.jpg", { type: "image/jpeg" }));
+      }, "image/jpeg", 0.82);
+    };
+    img.onerror = () => resolve(file);
+    img.src = url;
+  });
+}
+
 interface Note {
   id: string;
   content: string;
@@ -40,12 +63,17 @@ export function NotesClient({ initialNotes, isAdmin }: { initialNotes: Note[]; i
     try {
       let imageUrl: string | null = null;
       if (imageFile) {
+        const compressed = await compressImage(imageFile);
         const fd = new FormData();
-        fd.append("file", imageFile);
+        fd.append("file", compressed);
         const upRes = await fetch("/api/upload", { method: "POST", body: fd });
         if (upRes.ok) {
           const data = await upRes.json();
           imageUrl = data.url ?? null;
+        } else {
+          const err = await upRes.json().catch(() => ({}));
+          alert("Fotoğraf yüklenemedi: " + (err.error ?? upRes.status));
+          return;
         }
       }
 
