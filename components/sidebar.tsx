@@ -39,13 +39,13 @@ export function Sidebar({ projects, user }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-60 min-h-screen bg-gray-900 border-r border-gray-800 flex flex-col pb-[env(safe-area-inset-bottom)]">
+    <aside className="w-60 min-h-screen bg-gray-900 border-r border-gray-800 flex flex-col pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-500/20">
-            <span className="text-white text-sm font-bold">T</span>
+            <span className="text-white text-sm font-bold">A</span>
           </div>
-          <span className="font-semibold text-gray-100">TeamTodo</span>
+          <span className="font-semibold text-gray-100">Aras Bilişim</span>
         </div>
       </div>
 
