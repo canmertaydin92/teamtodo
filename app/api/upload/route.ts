@@ -21,15 +21,13 @@ export async function POST(req: NextRequest) {
 
   if (buffer.length > 10 * 1024 * 1024) return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
 
-  const uploadDir = join(process.cwd(), "public", "uploads");
-  try {
-    await mkdir(uploadDir, { recursive: true });
-  } catch {
-    // klasör zaten varsa devam et
-  }
+  const uploadDir = process.env.UPLOAD_DIR ?? join(process.cwd(), "public", "uploads");
+  await mkdir(uploadDir, { recursive: true });
 
   const filename = `${randomUUID()}.${ext}`;
-  await writeFile(join(uploadDir, filename), buffer);
+  const filepath = join(uploadDir, filename);
+  await writeFile(filepath, buffer);
 
+  console.log(`[upload] saved to: ${filepath}`);
   return NextResponse.json({ url: `/api/uploads/${filename}` });
 }

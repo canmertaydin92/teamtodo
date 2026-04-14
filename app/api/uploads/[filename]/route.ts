@@ -18,7 +18,8 @@ export async function GET(
   }
 
   try {
-    const filepath = join(process.cwd(), "public", "uploads", filename);
+    const uploadDir = process.env.UPLOAD_DIR ?? join(process.cwd(), "public", "uploads");
+    const filepath = join(uploadDir, filename);
     const data = await readFile(filepath);
     const ext = filename.split(".").pop()?.toLowerCase() ?? "";
     const contentType = MIME[ext] ?? "application/octet-stream";

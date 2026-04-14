@@ -17,7 +17,8 @@ jobs:
           script: |
             cd teamtodo
             git pull
-            mkdir -p public/uploads
+            mkdir -p /home/ubuntu/teamtodo/public/uploads
+            grep -q UPLOAD_DIR .env || echo "UPLOAD_DIR=/home/ubuntu/teamtodo/public/uploads" >> .env
             npx prisma db push --accept-data-loss
             npm run build
             pm2 restart teamtodo
