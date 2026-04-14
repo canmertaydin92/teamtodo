@@ -146,21 +146,21 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
         className="fixed inset-0 z-[60] bg-black/95 flex flex-col"
         onClick={() => setLightbox(null)}
       >
-        <div className="flex items-center p-4 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => setLightbox(null)}
-            className="flex items-center gap-2 text-white text-sm bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full transition-colors"
-          >
-            ← Geri
-          </button>
-        </div>
-        <div className="flex-1 flex items-center justify-center p-4 overflow-auto" onClick={() => setLightbox(null)}>
+        <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
           <img
             src={lightbox}
             alt="tam ekran"
             className="max-w-full max-h-full object-contain rounded-xl"
             onClick={(e) => e.stopPropagation()}
           />
+        </div>
+        <div className="flex justify-center p-6 pb-10 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setLightbox(null)}
+            className="flex items-center gap-2 text-white text-base bg-white/15 hover:bg-white/25 px-8 py-3 rounded-full transition-colors font-medium"
+          >
+            ← Geri
+          </button>
         </div>
       </div>
     )}
