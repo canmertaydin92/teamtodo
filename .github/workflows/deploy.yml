@@ -22,3 +22,9 @@ jobs:
             npx prisma db push --accept-data-loss
             npm run build
             pm2 restart teamtodo
+
+            # Nginx upload limit fix
+            if ! grep -q "client_max_body_size" /etc/nginx/sites-available/default; then
+              sudo sed -i 's|location / {|client_max_body_size 15m;\n\n    location / {|' /etc/nginx/sites-available/default
+              sudo nginx -t && sudo systemctl reload nginx
+            fi
