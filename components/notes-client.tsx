@@ -40,6 +40,7 @@ export function NotesClient({ initialNotes, isAdmin }: { initialNotes: Note[]; i
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -108,6 +109,31 @@ export function NotesClient({ initialNotes, isAdmin }: { initialNotes: Note[]; i
   }
 
   return (
+    <>
+    {/* Lightbox */}
+    {lightbox && (
+      <div
+        className="fixed inset-0 z-50 bg-black/95 flex flex-col"
+        onClick={() => setLightbox(null)}
+      >
+        <div className="flex items-center p-4 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setLightbox(null)}
+            className="flex items-center gap-2 text-white text-sm bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full transition-colors"
+          >
+            ← Geri
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4 overflow-auto" onClick={() => setLightbox(null)}>
+          <img
+            src={lightbox}
+            alt="tam ekran"
+            className="max-w-full max-h-full object-contain rounded-xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      </div>
+    )}
     <div className="space-y-4">
       {/* Not ekleme formu — sadece admin */}
       {isAdmin && (
@@ -205,7 +231,7 @@ export function NotesClient({ initialNotes, isAdmin }: { initialNotes: Note[]; i
                   src={note.imageUrl}
                   alt="not görseli"
                   className="mt-3 rounded-xl max-w-full max-h-72 object-cover cursor-pointer"
-                  onClick={() => window.open(note.imageUrl!, "_blank")}
+                  onClick={() => setLightbox(note.imageUrl!)}
                 />
               )}
             </div>
@@ -213,5 +239,6 @@ export function NotesClient({ initialNotes, isAdmin }: { initialNotes: Note[]; i
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -61,6 +61,7 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
   const [submitting, setSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -139,6 +140,30 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
     : null;
 
   return (
+    <>
+    {lightbox && (
+      <div
+        className="fixed inset-0 z-[60] bg-black/95 flex flex-col"
+        onClick={() => setLightbox(null)}
+      >
+        <div className="flex items-center p-4 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setLightbox(null)}
+            className="flex items-center gap-2 text-white text-sm bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full transition-colors"
+          >
+            ← Geri
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4 overflow-auto" onClick={() => setLightbox(null)}>
+          <img
+            src={lightbox}
+            alt="tam ekran"
+            className="max-w-full max-h-full object-contain rounded-xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      </div>
+    )}
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto bg-gray-900 border-gray-800 text-gray-100">
         <DialogHeader>
@@ -216,7 +241,7 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
                         src={c.imageUrl}
                         alt="yorum görseli"
                         className="mt-2 rounded-lg max-w-full max-h-64 object-cover cursor-pointer"
-                        onClick={() => window.open(c.imageUrl!, "_blank")}
+                        onClick={() => setLightbox(c.imageUrl!)}
                       />
                     )}
                   </div>
@@ -280,5 +305,6 @@ export function TaskModal({ taskId, open, onClose }: { taskId: string; open: boo
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
