@@ -36,6 +36,7 @@ export function Sidebar({ projects, user }: SidebarProps) {
     { href: "/tasks", label: isAdmin ? "Tüm Görevler" : "Görevlerim", icon: "✅" },
     ...(isAdmin ? [{ href: "/team", label: "Ekip", icon: "👥" }] : []),
     { href: "/notes", label: "Notlar", icon: "📝" },
+    { href: "/isler", label: "İşler", icon: "💼" },
   ];
 
   return (

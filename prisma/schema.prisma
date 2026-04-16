@@ -47,6 +47,7 @@ model User {
   taskAssignments TaskAssignee[]
   comments      Comment[]
   notes         Note[]
+  jobs          Job[]
   activityLogs      ActivityLog[]
   pushSubscriptions PushSubscription[]
 }
@@ -128,6 +129,16 @@ model Note {
   createdAt DateTime @default(now())
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  String
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
 }
 
 model PushSubscription {
