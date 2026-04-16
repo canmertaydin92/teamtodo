@@ -130,8 +130,8 @@ export function JobsClient({ initialJobs, currentUserId, isAdmin }: {
       )}
 
       <div className="space-y-4">
-        {/* İş ekleme formu */}
-        <form onSubmit={handleSubmit} className="bg-gray-900 border border-indigo-500/30 rounded-2xl p-4 space-y-3">
+        {/* İş ekleme formu — sadece admin */}
+        {isAdmin && <form onSubmit={handleSubmit} className="bg-gray-900 border border-indigo-500/30 rounded-2xl p-4 space-y-3">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -174,7 +174,7 @@ export function JobsClient({ initialJobs, currentUserId, isAdmin }: {
           </div>
 
           <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageChange} />
-        </form>
+        </form>}
 
         {/* İş listesi */}
         {jobs.length === 0 ? (
@@ -199,7 +199,7 @@ export function JobsClient({ initialJobs, currentUserId, isAdmin }: {
                       </p>
                     </div>
                   </div>
-                  {(isAdmin || job.author.id === currentUserId) && (
+                  {isAdmin && (
                     <button onClick={() => handleDelete(job.id)} className="text-gray-700 hover:text-red-400 text-xs transition-colors flex-shrink-0" title="Sil">
                       🗑
                     </button>
