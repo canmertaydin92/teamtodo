@@ -47,7 +47,8 @@ model User {
   taskAssignments TaskAssignee[]
   comments      Comment[]
   notes         Note[]
-  jobs          Job[]
+  jobsAuthored  Job[]  @relation("JobAuthor")
+  jobsAssigned  Job[]  @relation("JobAssignee")
   activityLogs      ActivityLog[]
   pushSubscriptions PushSubscription[]
 }
@@ -137,8 +138,10 @@ model Job {
   description String?  @db.Text
   imageUrl    String?
   createdAt   DateTime @default(now())
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author      User     @relation("JobAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   authorId    String
+  assignee    User?    @relation("JobAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  assigneeId  String?
 }
 
 model PushSubscription {

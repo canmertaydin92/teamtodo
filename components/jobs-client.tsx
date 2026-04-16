@@ -25,23 +25,32 @@ async function compressImage(file: File): Promise<File> {
   });
 }
 
+interface User {
+  id: string;
+  name?: string | null;
+  image?: string | null;
+}
+
 interface Job {
   id: string;
   title: string;
   description?: string | null;
   imageUrl?: string | null;
   createdAt: string;
-  author: { id: string; name?: string | null; image?: string | null };
+  author: User;
+  assignee?: User | null;
 }
 
-export function JobsClient({ initialJobs, currentUserId, isAdmin }: {
+export function JobsClient({ initialJobs, currentUserId, isAdmin, users }: {
   initialJobs: Job[];
   currentUserId: string;
   isAdmin: boolean;
+  users: User[];
 }) {
   const [jobs, setJobs] = useState(initialJobs);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [assigneeId, setAssigneeId] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -85,7 +94,7 @@ export function JobsClient({ initialJobs, currentUserId, isAdmin }: {
       const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, imageUrl }),
+        body: JSON.stringify({ title, description, imageUrl, assigneeId: assigneeId || null }),
       });
 
       if (!res.ok) {
@@ -98,6 +107,7 @@ export function JobsClient({ initialJobs, currentUserId, isAdmin }: {
       setJobs((prev) => [job, ...prev]);
       setTitle("");
       setDescription("");
+      setAssigneeId("");
       setImageFile(null);
       setImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -131,50 +141,85 @@ export function JobsClient({ initialJobs, currentUserId, isAdmin }: {
 
       <div className="space-y-4">
         {/* İş ekleme formu — sadece admin */}
-        {isAdmin && <form onSubmit={handleSubmit} className="bg-gray-900 border border-indigo-500/30 rounded-2xl p-4 space-y-3">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="İş başlığı *"
-            className="w-full text-sm bg-transparent outline-none text-gray-200 placeholder:text-gray-600 font-medium"
-          />
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Açıklama (isteğe bağlı)..."
-            rows={2}
-            className="w-full text-sm bg-transparent outline-none resize-none text-gray-300 placeholder:text-gray-600"
-          />
+        {isAdmin && (
+          <form onSubmit={handleSubmit} className="bg-gray-900 border border-indigo-500/30 rounded-2xl p-4 space-y-3">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="İş başlığı *"
+              className="w-full text-sm bg-transparent outline-none text-gray-200 placeholder:text-gray-600 font-medium"
+            />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Açıklama (isteğe bağlı)..."
+              rows={2}
+              className="w-full text-sm bg-transparent outline-none resize-none text-gray-300 placeholder:text-gray-600"
+            />
 
-          {imagePreview && (
-            <div className="relative inline-block">
-              <img src={imagePreview} alt="önizleme" className="rounded-xl max-h-48 object-cover" />
-              <button type="button" onClick={removeImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-                ✕
+            {/* Kişi atama */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setAssigneeId("")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
+                  assigneeId === ""
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                }`}
+              >
+                Atanmadı
+              </button>
+              {users.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => setAssigneeId(u.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
+                    assigneeId === u.id
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                  }`}
+                >
+                  <Avatar className="w-4 h-4">
+                    <AvatarImage src={u.image ?? ""} />
+                    <AvatarFallback className="text-[8px] bg-gray-600">{u.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  {u.name}
+                </button>
+              ))}
+            </div>
+
+            {imagePreview && (
+              <div className="relative inline-block">
+                <img src={imagePreview} alt="önizleme" className="rounded-xl max-h-48 object-cover" />
+                <button type="button" onClick={removeImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                  ✕
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-1 border-t border-gray-800">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-gray-800"
+              >
+                <span className="text-base">📷</span>
+                <span>Fotoğraf ekle</span>
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || !title.trim()}
+                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm rounded-lg font-medium transition-colors"
+              >
+                {submitting ? "Ekleniyor..." : "Ekle"}
               </button>
             </div>
-          )}
 
-          <div className="flex items-center justify-between pt-1 border-t border-gray-800">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-gray-800"
-            >
-              <span className="text-base">📷</span>
-              <span>Fotoğraf ekle</span>
-            </button>
-            <button
-              type="submit"
-              disabled={submitting || !title.trim()}
-              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm rounded-lg font-medium transition-colors"
-            >
-              {submitting ? "Ekleniyor..." : "Ekle"}
-            </button>
-          </div>
-
-          <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageChange} />
-        </form>}
+            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageChange} />
+          </form>
+        )}
 
         {/* İş listesi */}
         {jobs.length === 0 ? (
@@ -208,8 +253,21 @@ export function JobsClient({ initialJobs, currentUserId, isAdmin }: {
 
                 <p className="text-sm font-semibold text-gray-200 mb-1">{job.title}</p>
                 {job.description && (
-                  <p className="text-sm text-gray-400 whitespace-pre-wrap leading-relaxed">{job.description}</p>
+                  <p className="text-sm text-gray-400 whitespace-pre-wrap leading-relaxed mb-2">{job.description}</p>
                 )}
+
+                {/* Atanan kişi */}
+                {job.assignee && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="text-xs text-gray-600">Atanan:</span>
+                    <Avatar className="w-5 h-5">
+                      <AvatarImage src={job.assignee.image ?? ""} />
+                      <AvatarFallback className="text-[8px] bg-gray-700 text-gray-300">{job.assignee.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-gray-400 font-medium">{job.assignee.name}</span>
+                  </div>
+                )}
+
                 {job.imageUrl && (
                   <img
                     src={job.imageUrl}

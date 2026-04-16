@@ -6,10 +6,19 @@ export default async function IslerPage() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const jobs = await prisma.job.findMany({
-    include: { author: { select: { id: true, name: true, image: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [jobs, users] = await Promise.all([
+    prisma.job.findMany({
+      include: {
+        author: { select: { id: true, name: true, image: true } },
+        assignee: { select: { id: true, name: true, image: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.findMany({
+      select: { id: true, name: true, image: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   const isAdmin = session.user.role === "ADMIN";
 
@@ -23,6 +32,7 @@ export default async function IslerPage() {
         initialJobs={jobs as any}
         currentUserId={session.user.id}
         isAdmin={isAdmin}
+        users={users}
       />
     </div>
   );
