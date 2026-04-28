@@ -114,23 +114,20 @@ export function PaymentsClient({ initialPayments }: { initialPayments: Payment[]
       </div>
 
       {/* Özet kartları */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-          <p className="text-xs text-gray-500 mb-1">Toplam Gider</p>
-          <p className="text-xl font-bold text-red-400">₺{fmt(totalExpense)}</p>
-          <p className="text-xs text-gray-600 mt-1">{filterLabel}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex sm:block items-center justify-between">
+          <p className="text-xs text-gray-500">Toplam Gider</p>
+          <p className="text-lg font-bold text-red-400">₺{fmt(totalExpense)}</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-          <p className="text-xs text-gray-500 mb-1">Toplam Gelir</p>
-          <p className="text-xl font-bold text-green-400">₺{fmt(totalIncome)}</p>
-          <p className="text-xs text-gray-600 mt-1">{filterLabel}</p>
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex sm:block items-center justify-between">
+          <p className="text-xs text-gray-500">Toplam Gelir</p>
+          <p className="text-lg font-bold text-green-400">₺{fmt(totalIncome)}</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-          <p className="text-xs text-gray-500 mb-1">Net Kâr</p>
-          <p className={`text-xl font-bold ${totalProfit >= 0 ? "text-indigo-400" : "text-red-400"}`}>
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex sm:block items-center justify-between">
+          <p className="text-xs text-gray-500">Net Kâr</p>
+          <p className={`text-lg font-bold ${totalProfit >= 0 ? "text-indigo-400" : "text-red-400"}`}>
             ₺{fmt(totalProfit)}
           </p>
-          <p className="text-xs text-gray-600 mt-1">{filterLabel}</p>
         </div>
       </div>
 
@@ -196,47 +193,78 @@ export function PaymentsClient({ initialPayments }: { initialPayments: Payment[]
           <p className="text-sm">{payments.length === 0 ? "Henüz kayıt yok" : "Bu dönemde kayıt yok"}</p>
         </div>
       ) : (
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-800 text-xs text-gray-500">
-                <th className="text-left px-4 py-3">İş</th>
-                <th className="text-left px-4 py-3">Tarih</th>
-                <th className="text-right px-4 py-3">Harcanan</th>
-                <th className="text-right px-4 py-3">Alınan</th>
-                <th className="text-right px-4 py-3">Kâr</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => {
-                const profit = p.income - p.expense;
-                return (
-                  <tr key={p.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-200">{p.title}</td>
-                    <td className="px-4 py-3 text-gray-400">
-                      {new Date(p.date).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
-                    </td>
-                    <td className="px-4 py-3 text-right text-red-400">₺{fmt(p.expense)}</td>
-                    <td className="px-4 py-3 text-right text-green-400">₺{fmt(p.income)}</td>
-                    <td className={`px-4 py-3 text-right font-semibold ${profit >= 0 ? "text-indigo-400" : "text-red-400"}`}>
-                      ₺{fmt(profit)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        className="text-gray-700 hover:text-red-400 transition-colors"
-                        title="Sil"
-                      >
-                        🗑
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {/* Masaüstü tablo */}
+          <div className="hidden sm:block bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-800 text-xs text-gray-500">
+                  <th className="text-left px-4 py-3">İş</th>
+                  <th className="text-left px-4 py-3">Tarih</th>
+                  <th className="text-right px-4 py-3">Harcanan</th>
+                  <th className="text-right px-4 py-3">Alınan</th>
+                  <th className="text-right px-4 py-3">Kâr</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p) => {
+                  const profit = p.income - p.expense;
+                  return (
+                    <tr key={p.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-200">{p.title}</td>
+                      <td className="px-4 py-3 text-gray-400">
+                        {new Date(p.date).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
+                      </td>
+                      <td className="px-4 py-3 text-right text-red-400">₺{fmt(p.expense)}</td>
+                      <td className="px-4 py-3 text-right text-green-400">₺{fmt(p.income)}</td>
+                      <td className={`px-4 py-3 text-right font-semibold ${profit >= 0 ? "text-indigo-400" : "text-red-400"}`}>
+                        ₺{fmt(profit)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button onClick={() => handleDelete(p.id)} className="text-gray-700 hover:text-red-400 transition-colors" title="Sil">🗑</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobil kart görünümü */}
+          <div className="sm:hidden space-y-3">
+            {filtered.map((p) => {
+              const profit = p.income - p.expense;
+              return (
+                <div key={p.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-gray-200 text-sm">{p.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {new Date(p.date).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
+                      </p>
+                    </div>
+                    <button onClick={() => handleDelete(p.id)} className="text-gray-700 hover:text-red-400 transition-colors flex-shrink-0" title="Sil">🗑</button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-800">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Harcanan</p>
+                      <p className="text-sm font-semibold text-red-400">₺{fmt(p.expense)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Alınan</p>
+                      <p className="text-sm font-semibold text-green-400">₺{fmt(p.income)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Kâr</p>
+                      <p className={`text-sm font-semibold ${profit >= 0 ? "text-indigo-400" : "text-red-400"}`}>₺{fmt(profit)}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
