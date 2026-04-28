@@ -16,6 +16,8 @@ function fmt(n: number) {
   return n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+
 export function PaymentsClient({ initialPayments }: { initialPayments: Payment[] }) {
   const [payments, setPayments] = useState(initialPayments);
   const [title, setTitle] = useState("");
@@ -24,9 +26,31 @@ export function PaymentsClient({ initialPayments }: { initialPayments: Payment[]
   const [income, setIncome] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const totalExpense = payments.reduce((s, p) => s + p.expense, 0);
-  const totalIncome = payments.reduce((s, p) => s + p.income, 0);
+  const now = new Date();
+  const [filterYear, setFilterYear] = useState<string>(String(now.getFullYear()));
+  const [filterMonth, setFilterMonth] = useState<string>(String(now.getMonth() + 1));
+
+  // Mevcut yılları hesapla
+  const years = Array.from(new Set(payments.map((p) => new Date(p.date).getFullYear())))
+    .sort((a, b) => b - a);
+  if (!years.includes(now.getFullYear())) years.unshift(now.getFullYear());
+
+  const filtered = payments.filter((p) => {
+    const d = new Date(p.date);
+    const yearMatch = filterYear === "all" || d.getFullYear() === parseInt(filterYear);
+    const monthMatch = filterMonth === "all" || (d.getMonth() + 1) === parseInt(filterMonth);
+    return yearMatch && monthMatch;
+  });
+
+  const totalExpense = filtered.reduce((s, p) => s + p.expense, 0);
+  const totalIncome = filtered.reduce((s, p) => s + p.income, 0);
   const totalProfit = totalIncome - totalExpense;
+
+  const filterLabel = filterYear === "all"
+    ? "Tüm Zamanlar"
+    : filterMonth === "all"
+    ? filterYear
+    : `${MONTHS[parseInt(filterMonth) - 1]} ${filterYear}`;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,21 +88,49 @@ export function PaymentsClient({ initialPayments }: { initialPayments: Payment[]
 
   return (
     <div className="space-y-6">
+      {/* Filtre */}
+      <div className="flex items-center gap-3">
+        <select
+          value={filterYear}
+          onChange={(e) => setFilterYear(e.target.value)}
+          className="bg-gray-800 text-gray-200 text-sm rounded-lg px-3 py-2 outline-none border border-gray-700"
+        >
+          <option value="all">Tüm Yıllar</option>
+          {years.map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+        <select
+          value={filterMonth}
+          onChange={(e) => setFilterMonth(e.target.value)}
+          className="bg-gray-800 text-gray-200 text-sm rounded-lg px-3 py-2 outline-none border border-gray-700"
+        >
+          <option value="all">Tüm Aylar</option>
+          {MONTHS.map((m, i) => (
+            <option key={i + 1} value={i + 1}>{m}</option>
+          ))}
+        </select>
+        <span className="text-xs text-gray-500">{filtered.length} kayıt · {filterLabel}</span>
+      </div>
+
       {/* Özet kartları */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-500 mb-1">Toplam Gider</p>
           <p className="text-xl font-bold text-red-400">₺{fmt(totalExpense)}</p>
+          <p className="text-xs text-gray-600 mt-1">{filterLabel}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-500 mb-1">Toplam Gelir</p>
           <p className="text-xl font-bold text-green-400">₺{fmt(totalIncome)}</p>
+          <p className="text-xs text-gray-600 mt-1">{filterLabel}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
           <p className="text-xs text-gray-500 mb-1">Net Kâr</p>
           <p className={`text-xl font-bold ${totalProfit >= 0 ? "text-indigo-400" : "text-red-400"}`}>
             ₺{fmt(totalProfit)}
           </p>
+          <p className="text-xs text-gray-600 mt-1">{filterLabel}</p>
         </div>
       </div>
 
@@ -138,10 +190,10 @@ export function PaymentsClient({ initialPayments }: { initialPayments: Payment[]
       </form>
 
       {/* Kayıt listesi */}
-      {payments.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-600">
           <p className="text-4xl mb-3">💰</p>
-          <p className="text-sm">Henüz kayıt yok</p>
+          <p className="text-sm">{payments.length === 0 ? "Henüz kayıt yok" : "Bu dönemde kayıt yok"}</p>
         </div>
       ) : (
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
@@ -157,7 +209,7 @@ export function PaymentsClient({ initialPayments }: { initialPayments: Payment[]
               </tr>
             </thead>
             <tbody>
-              {payments.map((p) => {
+              {filtered.map((p) => {
                 const profit = p.income - p.expense;
                 return (
                   <tr key={p.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
