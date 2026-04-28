@@ -49,6 +49,7 @@ model User {
   notes         Note[]
   jobsAuthored  Job[]  @relation("JobAuthor")
   jobsAssigned  Job[]  @relation("JobAssignee")
+  payments      Payment[]
   activityLogs      ActivityLog[]
   pushSubscriptions PushSubscription[]
 }
@@ -152,6 +153,17 @@ model PushSubscription {
   p256dh    String
   auth      String
   createdAt DateTime @default(now())
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime
+  expense   Float    @default(0)
+  income    Float    @default(0)
+  createdAt DateTime @default(now())
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
 }
 
 model ActivityLog {

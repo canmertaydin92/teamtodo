@@ -107,6 +107,18 @@ export function Sidebar({ projects, user }: SidebarProps) {
                 Yönetim
               </span>
             </div>
+            <Link
+              href="/admin/payments"
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
+                pathname === "/admin/payments"
+                  ? "bg-indigo-500/15 text-indigo-400 font-medium"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+              )}
+            >
+              <span>💰</span>
+              Ücretler
+            </Link>
             {isOwner && <Link
               href="/admin/users"
               className={cn(
