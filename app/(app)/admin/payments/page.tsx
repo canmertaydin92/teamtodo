@@ -16,7 +16,7 @@ export default async function PaymentsPage() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-100">Ücretler</h1>
+        <h1 className="text-2xl font-bold text-gray-100">Gelir-Gider</h1>
         <p className="text-sm text-gray-500 mt-1">İşlere ait gelir, gider ve kâr takibi</p>
       </div>
       <PaymentsClient initialPayments={JSON.parse(JSON.stringify(payments))} />

@@ -117,7 +117,7 @@ export function Sidebar({ projects, user }: SidebarProps) {
               )}
             >
               <span>💰</span>
-              Ücretler
+              Gelir-Gider
             </Link>
             {isOwner && <Link
               href="/admin/users"
